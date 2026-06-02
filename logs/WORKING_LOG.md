@@ -35,6 +35,7 @@ Use this file to keep Codex and future sessions aligned.
 - Phase 10 scan orchestration is being added with a shared `runScan` module, protected manual trigger route, cron routes, and local scan scripts.
 - Dashboard and alerts views are being updated to show the latest morning/evening scan summaries, counts, and completion state.
 - `TRADER_AI_ADMIN_SECRET` and `CRON_SECRET` are now part of the server-only environment boundary for scan triggers.
+- A lightweight repository check is being added so client components cannot accidentally import server-secret scan or ingestion modules.
 
 ## Next recommended action
 

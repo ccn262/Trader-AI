@@ -13,7 +13,8 @@
     "generate:opportunity-alerts": "node --import tsx scripts/generate-opportunity-alerts.mjs",
     "scan:manual": "node --import tsx scripts/run-scan.mjs manual",
     "scan:morning": "node --import tsx scripts/run-scan.mjs morning",
-    "scan:evening": "node --import tsx scripts/run-scan.mjs evening"
+    "scan:evening": "node --import tsx scripts/run-scan.mjs evening",
+    "check:server-boundaries": "node scripts/check-server-boundaries.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
