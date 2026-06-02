@@ -142,6 +142,7 @@ async function main() {
   let highPriorityReview = 0
   let speculativeReview = 0
   let avoidOrReassess = 0
+  let failureCount = 0
 
   for (const item of items ?? []) {
     const rawAnnouncement = item.raw_announcement_id
@@ -188,6 +189,7 @@ async function main() {
     if (updateError) {
       console.error(`Failed to score intelligence item ${item.id}.`)
       console.error(updateError.message)
+      failureCount += 1
       continue
     }
 
@@ -238,6 +240,7 @@ async function main() {
     if (historyError) {
       console.error(`Failed to record score history for intelligence item ${item.id}.`)
       console.error(historyError.message)
+      failureCount += 1
     }
   }
 
@@ -256,7 +259,7 @@ async function main() {
     ),
   )
 
-  return 0
+  return failureCount > 0 ? 1 : 0
 }
 
 const exitCode = await main()

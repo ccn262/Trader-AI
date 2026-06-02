@@ -34,3 +34,5 @@
 - Added `supabase/migrations/20260607_phase8_impact_scoring.sql` for announcement classification, direction, risk, priority, scoring reason, and scoring timestamp fields.
 - Added a deterministic RNS impact-scoring module and `npm run score:rns:impact` for idempotent server-side scoring plus controlled `score_history` writes.
 - Updated `/alerts` recent intelligence output and mock fallback data to expose classification, impact direction, risk level, priority, and scoring reason as read-only evidence.
+- Added a follow-up migration to allow negative `intelligence_items.impact_score` values and matching negative `score_history.score` values for adverse announcements.
+- Made the RNS scoring script return a nonzero exit code when row-level scoring fails, so missing database migrations are reported cleanly.
