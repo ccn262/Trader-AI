@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import {
@@ -20,7 +19,28 @@ export default async function JournalEntryPage({
   const writable = hasSupabaseConfig();
 
   if (!entry) {
-    notFound();
+    return (
+      <AppShell
+        title="Journal not found"
+        subtitle="Decision support only. Trades are placed manually outside this app."
+      >
+        <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
+          <p className="text-lg font-semibold text-white">
+            No journal entry found for {id}.
+          </p>
+          <p className="mt-3 text-sm leading-6 text-slate-400">
+            The entry may have been archived or the link may be pointing at a
+            mock record that has not been seeded yet.
+          </p>
+          <Link
+            href="/journal"
+            className="mt-5 inline-flex rounded-2xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950"
+          >
+            Back to journal
+          </Link>
+        </section>
+      </AppShell>
+    );
   }
 
   return (

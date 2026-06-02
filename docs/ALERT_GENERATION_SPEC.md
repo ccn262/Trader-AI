@@ -132,6 +132,10 @@ Rules:
 - Preserve the source URL where available.
 - Keep evidence review-only and traceable.
 - Prefer deterministic evidence over narrative summaries.
+- Real external evidence URLs should open externally and use `rel="noopener noreferrer"`.
+- Mock, demo, placeholder, localhost, or test URLs must not be presented as verified external evidence.
+- Mock/demo evidence should route internally to the intelligence detail page or be shown as unavailable if no safe internal reference exists.
+- Missing evidence must be shown as unavailable instead of linking to a fake or broken source.
 
 ## Deduplication And Idempotency
 

@@ -198,3 +198,15 @@ Impact:
 - The repository now documents which modules are server-only boundaries and which env vars must never be exposed client-side.
 - A lightweight check script can fail fast if a `"use client"` file imports server-secret scan or ingestion modules.
 - Runtime scan behavior, cron timing, and public UI flows remain unchanged.
+
+## 2026-06-02 - Evidence link trust
+
+Decision: Treat mock, demo, placeholder, localhost, and test evidence URLs as non-verified and route them internally or show them as unavailable instead of opening them as fake external sources.
+
+Reason: Evidence-led review only requires trustworthy link behavior. Fake source URLs undermine source trust and can mislead users into thinking mock data is live market evidence.
+
+Impact:
+
+- `/alerts` now distinguishes real external sources from demo/sample evidence and unavailable evidence.
+- `/intelligence/[id]` provides a safe internal review page for announcement evidence and clearly labels mock/demo records.
+- Missing source links are shown as unavailable rather than routed to a broken or misleading destination.

@@ -4,10 +4,16 @@ import {
   classifyAnnouncement,
   mapImpactToPriority,
   scoreAnnouncementImpact,
+  type AnnouncementClassification,
   type AnnouncementImpactDirection,
   type AnnouncementPriority,
   type AnnouncementRiskLevel,
 } from "./scoring/announcement-impact";
+import {
+  getEvidenceLinkMode,
+  isMockEvidenceUrl,
+  isValidExternalEvidenceUrl,
+} from "./evidence-links";
 import { getSupabaseClient, hasSupabaseConfig } from "./supabase/server";
 import type {
   AiScoreRow,
@@ -30,7 +36,10 @@ import {
   dashboardScores as mockDashboardScores,
   disclaimer as mockDisclaimer,
   formatCurrency,
+  intelligenceItems as mockIntelligenceItems,
+  intelligenceSources as mockIntelligenceSources,
   journalEntries as mockJournalEntries,
+  rawAnnouncements as mockRawAnnouncements,
   opportunityAlerts as mockOpportunityAlerts,
   opportunityScans as mockOpportunityScans,
   portfolioPositions as mockPortfolioPositions,
@@ -176,8 +185,81 @@ export type OpportunityAlertEvidenceViewModel = {
   label: string;
   summary: string;
   sourceUrl: string | null;
+  intelligenceItemId: string | null;
   evidenceType: string | null;
   isPrimary: boolean;
+};
+
+export type IntelligenceSourceViewModel = {
+  id: string;
+  name: string;
+  sourceType: string;
+  baseUrl: string | null;
+  confidenceScore: number;
+  isActive: boolean;
+  notes: string;
+};
+
+export type RawAnnouncementViewModel = {
+  id: string;
+  sourceId: string | null;
+  externalId: string | null;
+  assetSymbol: string;
+  companyName: string;
+  headline: string;
+  announcementType: string;
+  rawCategory: string;
+  sourceUrl: string | null;
+  publishedAt: string;
+  ingestionStatus: string;
+  rawPayloadSummary: string;
+};
+
+export type IntelligenceDetailViewModel = {
+  id: string;
+  assetSymbol: string;
+  companyName: string;
+  headline: string;
+  summary: string;
+  sourceName: string;
+  sourceConfidence: string;
+  sourceConfidenceScore: number;
+  verificationStatus: "Verified" | "Partially verified" | "Unverified" | "Failed";
+  classification: string;
+  impactDirection: "Positive" | "Negative" | "Neutral" | "Mixed" | "Unknown" | "Speculative";
+  impactScore: number;
+  riskLevel: "Low" | "Medium" | "High" | "Speculative" | "Critical";
+  priority:
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Speculative review"
+    | "Avoid or reassess";
+  scoringReason: string;
+  publishedAt: string;
+  sourceUrl: string | null;
+  sourceUrlMode: "external" | "internal" | "unavailable";
+  sourceUrlLabel: string;
+  rawAnnouncement: RawAnnouncementViewModel | null;
+  evidenceItems: IntelligenceEvidenceViewModel[];
+  linkedAlerts: Array<{
+    id: string;
+    symbol: string;
+    priority: string;
+    reviewBy: string;
+  }>;
+};
+
+export type IntelligenceEvidenceViewModel = {
+  id: string;
+  label: string;
+  summary: string;
+  sourceUrl: string | null;
+  intelligenceItemId: string | null;
+  evidenceType: string | null;
+  isPrimary: boolean;
+  linkMode: "external" | "internal" | "unavailable";
+  linkLabel: string;
 };
 
 export type OpportunityAlertFeed = {
@@ -428,6 +510,217 @@ function getMockOpportunityAlertFeed(): OpportunityAlertFeed {
     scans: mockOpportunityScans.map((scan) => ({ ...scan })),
     alerts: mockOpportunityAlerts.map((alert) => ({ ...alert })),
     recentIntelligence: mockRecentIntelligenceItems.map((item) => ({ ...item })),
+  };
+}
+
+function getMockIntelligenceSourceById(id: string) {
+  return (
+    mockIntelligenceSources.find((source) => source.id === id) ?? null
+  );
+}
+
+function getMockRawAnnouncementById(id: string) {
+  return mockRawAnnouncements.find((announcement) => announcement.id === id) ?? null;
+}
+
+function getMockIntelligenceItemById(
+  id: string,
+): IntelligenceDetailViewModel | null {
+  const intelligenceItem = mockIntelligenceItems.find((item) => item.id === id);
+  if (!intelligenceItem) {
+    return null;
+  }
+
+  const source = getMockIntelligenceSourceById(intelligenceItem.sourceId);
+  const rawAnnouncement = getMockRawAnnouncementById(
+    intelligenceItem.rawAnnouncementId,
+  );
+  const evidenceItems = mockOpportunityAlerts
+    .filter((alert) => alert.sourceIntelligenceItemId === intelligenceItem.id)
+    .flatMap((alert) =>
+      alert.evidenceItems.map((item, index) =>
+        mapIntelligenceEvidenceViewModel({
+          id: `${alert.id}-${index}`,
+          label: item.label,
+          summary: item.summary,
+          sourceUrl: item.sourceUrl,
+          intelligenceItemId: item.intelligenceItemId,
+          evidenceType: item.evidenceType,
+          isPrimary: item.isPrimary,
+        }),
+      ),
+    );
+
+  const sourceUrl = intelligenceItem.sourceUrl ?? rawAnnouncement?.sourceUrl ?? null;
+  const sourceUrlMode = mapIntelligenceSourceUrlMode(sourceUrl);
+
+  return {
+    id: intelligenceItem.id,
+    assetSymbol: intelligenceItem.assetSymbol,
+    companyName: rawAnnouncement?.companyName ?? intelligenceItem.assetSymbol,
+    headline: intelligenceItem.headline,
+    summary: intelligenceItem.summary,
+    sourceName: source?.name ?? "Unknown source",
+    sourceConfidence: formatConfidenceLabel(intelligenceItem.sourceConfidence),
+    sourceConfidenceScore: intelligenceItem.sourceConfidence,
+    verificationStatus: formatVerificationStatus(
+      intelligenceItem.verificationStatus,
+    ),
+    classification: formatClassificationLabel(intelligenceItem.classification),
+    impactDirection: formatImpactDirectionLabel(
+      intelligenceItem.impactDirection,
+    ),
+    impactScore: intelligenceItem.impactScore,
+    riskLevel: formatRiskLevelLabel(intelligenceItem.riskLevel),
+    priority: formatPriorityLabel(intelligenceItem.priority),
+    scoringReason: intelligenceItem.scoringReason,
+    publishedAt: formatReviewDate(intelligenceItem.publishedAt),
+    sourceUrl,
+    sourceUrlMode,
+    sourceUrlLabel:
+      sourceUrlMode === "external"
+        ? "Open source"
+        : sourceUrlMode === "internal"
+          ? "Demo/sample evidence"
+          : "External source unavailable",
+    rawAnnouncement: rawAnnouncement
+      ? mapRawAnnouncementViewModel(rawAnnouncement)
+      : null,
+    evidenceItems,
+    linkedAlerts: mockOpportunityAlerts
+      .filter((alert) => alert.sourceIntelligenceItemId === intelligenceItem.id)
+      .map((alert) => ({
+        id: alert.id,
+        symbol: alert.symbol,
+        priority: alert.priority,
+        reviewBy: formatReviewDate(alert.reviewBy),
+      })),
+  };
+}
+
+function mapEvidenceLinkMode(
+  sourceUrl: string | null,
+  intelligenceItemId: string | null,
+): "external" | "internal" | "unavailable" {
+  return getEvidenceLinkMode({ sourceUrl, intelligenceItemId });
+}
+
+function mapIntelligenceSourceUrlMode(sourceUrl: string | null) {
+  if (isValidExternalEvidenceUrl(sourceUrl)) {
+    return "external" as const;
+  }
+  if (isMockEvidenceUrl(sourceUrl)) {
+    return "internal" as const;
+  }
+  return "unavailable" as const;
+}
+
+function mapIntelligenceEvidenceViewModel({
+  id,
+  label,
+  summary,
+  sourceUrl,
+  intelligenceItemId,
+  evidenceType,
+  isPrimary,
+}: {
+  id: string;
+  label: string;
+  summary: string;
+  sourceUrl: string | null;
+  intelligenceItemId: string | null;
+  evidenceType: string | null;
+  isPrimary: boolean;
+}): IntelligenceEvidenceViewModel {
+  const linkMode = mapEvidenceLinkMode(sourceUrl, intelligenceItemId);
+
+  return {
+    id,
+    label,
+    summary,
+    sourceUrl,
+    intelligenceItemId,
+    evidenceType,
+    isPrimary,
+    linkMode,
+    linkLabel:
+      linkMode === "external"
+        ? "Open source"
+        : linkMode === "internal"
+          ? intelligenceItemId
+            ? sourceUrl
+              ? "View demo evidence"
+              : "View evidence"
+            : "Evidence unavailable"
+          : "Evidence unavailable",
+  };
+}
+
+function mapRawAnnouncementViewModel(
+  row: RawAnnouncementRow | (typeof mockRawAnnouncements)[number] | null,
+): RawAnnouncementViewModel | null {
+  if (!row) {
+    return null;
+  }
+
+  const rawPayload =
+    "rawPayload" in row ? row.rawPayload : row.raw_payload;
+  const payloadSummary = rawPayload
+    ? Object.entries(rawPayload)
+        .slice(0, 3)
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(" · ")
+    : "No raw payload stored.";
+
+  return {
+    id: row.id,
+    sourceId:
+      "sourceId" in row ? row.sourceId : row.source_id,
+    externalId:
+      "externalId" in row ? row.externalId : row.external_id,
+    assetSymbol:
+      "assetSymbol" in row ? row.assetSymbol ?? "Unknown" : row.asset_symbol ?? "Unknown",
+    companyName:
+      "companyName" in row ? row.companyName ?? "Unknown company" : row.company_name ?? "Unknown company",
+    headline: row.headline,
+    announcementType:
+      "announcementType" in row
+        ? row.announcementType ?? "other"
+        : row.announcement_type ?? "other",
+    rawCategory:
+      "rawCategory" in row ? row.rawCategory ?? "other" : row.raw_category ?? "other",
+    sourceUrl: "sourceUrl" in row ? row.sourceUrl : row.source_url,
+    publishedAt:
+      "publishedAt" in row
+        ? formatReviewDate(row.publishedAt ?? "")
+        : formatReviewDate(row.published_at ?? ""),
+    ingestionStatus:
+      "ingestionStatus" in row
+        ? row.ingestionStatus
+        : row.ingestion_status,
+    rawPayloadSummary: payloadSummary,
+  };
+}
+
+function mapIntelligenceSourceViewModel(
+  row: IntelligenceSourceRow | (typeof mockIntelligenceSources)[number] | null,
+): IntelligenceSourceViewModel | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    sourceType:
+      "sourceType" in row ? row.sourceType : row.source_type,
+    baseUrl: "baseUrl" in row ? row.baseUrl : row.base_url,
+    confidenceScore:
+      "confidenceScore" in row
+        ? row.confidenceScore
+        : row.confidence_score,
+    isActive: "isActive" in row ? row.isActive : row.is_active,
+    notes: row.notes ?? "",
   };
 }
 
@@ -745,6 +1038,7 @@ function mapOpportunityAlertRow(
               ? intelligenceRows.find((row) => row.id === item.intelligence_item_id)
                   ?.source_url ?? null
               : null),
+          intelligenceItemId: item.intelligence_item_id ?? null,
           evidenceType: item.evidence_type,
           isPrimary: item.is_primary,
         }))
@@ -754,6 +1048,7 @@ function mapOpportunityAlertRow(
               label: "Primary scored intelligence",
               summary: sourceIntelligenceItem.summary ?? sourceIntelligenceItem.headline,
               sourceUrl: sourceIntelligenceItem.source_url,
+              intelligenceItemId: sourceIntelligenceItem.id,
               evidenceType: "scored_intelligence",
               isPrimary: true,
             },
@@ -1827,4 +2122,249 @@ export async function getJournalEntryById(
 
   const assetRow = (asset as AssetRow | null) ?? null;
   return mapJournalRow(journalRow, assetRow ? [assetRow] : []);
+}
+
+export async function getIntelligenceSourceById(
+  id: string,
+): Promise<IntelligenceSourceViewModel | null> {
+  if (!hasSupabaseConfig()) {
+    return mapIntelligenceSourceViewModel(getMockIntelligenceSourceById(id) ?? null);
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return mapIntelligenceSourceViewModel(getMockIntelligenceSourceById(id) ?? null);
+  }
+
+  const { data } = await supabase
+    .from("intelligence_sources")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!data) {
+    return mapIntelligenceSourceViewModel(getMockIntelligenceSourceById(id) ?? null);
+  }
+
+  return mapIntelligenceSourceViewModel(data as IntelligenceSourceRow);
+}
+
+export async function getRawAnnouncementById(
+  id: string,
+): Promise<RawAnnouncementViewModel | null> {
+  if (!hasSupabaseConfig()) {
+    return mapRawAnnouncementViewModel(getMockRawAnnouncementById(id) ?? null);
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return mapRawAnnouncementViewModel(getMockRawAnnouncementById(id) ?? null);
+  }
+
+  const { data } = await supabase
+    .from("raw_announcements")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (!data) {
+    return mapRawAnnouncementViewModel(getMockRawAnnouncementById(id) ?? null);
+  }
+
+  return mapRawAnnouncementViewModel(data as RawAnnouncementRow);
+}
+
+export async function getOpportunityEvidenceForAlert(
+  alertId: string,
+): Promise<IntelligenceEvidenceViewModel[]> {
+  if (!hasSupabaseConfig()) {
+    const alert = mockOpportunityAlerts.find((item) => item.id === alertId);
+    return (
+      alert?.evidenceItems.map((item, index) =>
+        mapIntelligenceEvidenceViewModel({
+          id: `${alert.id}-${index}`,
+          label: item.label,
+          summary: item.summary,
+          sourceUrl: item.sourceUrl,
+          intelligenceItemId: item.intelligenceItemId,
+          evidenceType: item.evidenceType,
+          isPrimary: item.isPrimary,
+        }),
+      ) ?? []
+    );
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return [];
+  }
+
+  const { data } = await supabase
+    .from("opportunity_evidence")
+    .select("*")
+    .eq("opportunity_alert_id", alertId)
+    .order("created_at", { ascending: true });
+
+  const evidenceRows = (data ?? []) as OpportunityEvidenceRow[];
+  return evidenceRows.map((row) =>
+    mapIntelligenceEvidenceViewModel({
+      id: row.id,
+      label: row.evidence_label,
+      summary: row.evidence_summary ?? "",
+      sourceUrl: row.source_url,
+      intelligenceItemId: row.intelligence_item_id,
+      evidenceType: row.evidence_type,
+      isPrimary: row.is_primary,
+    }),
+  );
+}
+
+export async function getIntelligenceItemById(
+  id: string,
+): Promise<IntelligenceDetailViewModel | null> {
+  if (!hasSupabaseConfig()) {
+    return getMockIntelligenceItemById(id);
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return getMockIntelligenceItemById(id);
+  }
+
+  const [
+    intelligenceResult,
+    rawAnnouncementResult,
+    sourceResult,
+    evidenceResult,
+    alertsResult,
+  ] = await Promise.all([
+    supabase.from("intelligence_items").select("*").eq("id", id).maybeSingle(),
+    supabase
+      .from("raw_announcements")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle(),
+    supabase.from("intelligence_sources").select("*"),
+    supabase
+      .from("opportunity_evidence")
+      .select("*")
+      .eq("intelligence_item_id", id)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("opportunity_alerts")
+      .select("*")
+      .eq("source_intelligence_item_id", id)
+      .order("created_at", { ascending: false })
+      .limit(6),
+  ]);
+
+  if (intelligenceResult.error || rawAnnouncementResult.error || sourceResult.error || evidenceResult.error || alertsResult.error) {
+    return getMockIntelligenceItemById(id);
+  }
+
+  const intelligenceRow = intelligenceResult.data as IntelligenceItemRow | null;
+  if (!intelligenceRow) {
+    return getMockIntelligenceItemById(id);
+  }
+
+  const rawAnnouncementRow = (rawAnnouncementResult.data ?? null) as RawAnnouncementRow | null;
+  const sourceRows = (sourceResult.data ?? []) as IntelligenceSourceRow[];
+  const sourceRow = intelligenceRow.source_id
+    ? sourceRows.find((source) => source.id === intelligenceRow.source_id) ?? null
+    : null;
+  const evidenceRows = (evidenceResult.data ?? []) as OpportunityEvidenceRow[];
+  const alertRows = (alertsResult.data ?? []) as OpportunityAlertRow[];
+  const deterministicScore = scoreAnnouncementImpact({
+    announcementType: rawAnnouncementRow?.announcement_type ?? intelligenceRow.classification,
+    headline: rawAnnouncementRow?.headline ?? intelligenceRow.headline,
+    rawCategory: rawAnnouncementRow?.raw_category ?? null,
+    summary: intelligenceRow.summary ?? "",
+    assetSymbol: intelligenceRow.asset_symbol ?? rawAnnouncementRow?.asset_symbol ?? "",
+    companyName: rawAnnouncementRow?.company_name ?? "",
+  });
+
+  const sourceUrl = intelligenceRow.source_url ?? rawAnnouncementRow?.source_url ?? null;
+  const sourceUrlMode = mapIntelligenceSourceUrlMode(sourceUrl);
+  const summary =
+    intelligenceRow.summary ??
+    rawAnnouncementRow?.headline ??
+    intelligenceRow.headline;
+
+  return {
+    id: intelligenceRow.id,
+    assetSymbol: intelligenceRow.asset_symbol ?? rawAnnouncementRow?.asset_symbol ?? "Unknown",
+    companyName: rawAnnouncementRow?.company_name ?? "Unknown company",
+    headline: intelligenceRow.headline,
+    summary,
+    sourceName: sourceRow?.name ?? "Unknown source",
+    sourceConfidence: formatConfidenceLabel(
+      intelligenceRow.source_confidence ?? sourceRow?.confidence_score,
+    ),
+    sourceConfidenceScore: Number(
+      intelligenceRow.source_confidence ?? sourceRow?.confidence_score ?? 0,
+    ),
+    verificationStatus: formatVerificationStatus(
+      intelligenceRow.verification_status ?? rawAnnouncementRow?.ingestion_status ?? "unverified",
+    ),
+    classification: formatClassificationLabel(
+      intelligenceRow.classification ?? rawAnnouncementRow?.announcement_type ?? deterministicScore.classification,
+    ),
+    impactDirection: formatImpactDirectionLabel(
+      intelligenceRow.impact_direction ?? deterministicScore.impactDirection,
+    ),
+    impactScore: Number(
+      intelligenceRow.impact_score ?? deterministicScore.impactScore ?? 0,
+    ),
+    riskLevel: formatRiskLevelLabel(
+      intelligenceRow.risk_level ?? deterministicScore.riskLevel,
+    ),
+    priority: formatPriorityLabel(
+      intelligenceRow.priority ??
+        mapImpactToPriority({
+          classification:
+            (intelligenceRow.classification ??
+              deterministicScore.classification) as AnnouncementClassification,
+          impactDirection:
+            intelligenceRow.impact_direction ?? deterministicScore.impactDirection,
+          impactScore:
+            intelligenceRow.impact_score ?? deterministicScore.impactScore,
+          riskLevel: intelligenceRow.risk_level ?? deterministicScore.riskLevel,
+        }),
+    ),
+    scoringReason:
+      intelligenceRow.scoring_reason ??
+      deterministicScore.scoringReason ??
+      "Review the announcement manually before drawing a conclusion.",
+    publishedAt: formatReviewDate(
+      intelligenceRow.published_at ?? rawAnnouncementRow?.published_at ?? intelligenceRow.created_at,
+    ),
+    sourceUrl,
+    sourceUrlMode,
+    sourceUrlLabel:
+      sourceUrlMode === "external"
+        ? "Open source"
+        : sourceUrlMode === "internal"
+          ? "Demo/sample evidence"
+          : "External source unavailable",
+    rawAnnouncement: rawAnnouncementRow
+      ? mapRawAnnouncementViewModel(rawAnnouncementRow)
+      : null,
+    evidenceItems: evidenceRows.map((row) =>
+      mapIntelligenceEvidenceViewModel({
+        id: row.id,
+        label: row.evidence_label,
+        summary: row.evidence_summary ?? "",
+        sourceUrl: row.source_url,
+        intelligenceItemId: row.intelligence_item_id,
+        evidenceType: row.evidence_type,
+        isPrimary: row.is_primary,
+      }),
+    ),
+    linkedAlerts: alertRows.map((alert) => ({
+      id: alert.id,
+      symbol: alert.asset_symbol,
+      priority: formatPriorityLabel(alert.priority),
+      reviewBy: alert.review_by ? formatReviewDate(alert.review_by) : "Review manually",
+    })),
+  };
 }
