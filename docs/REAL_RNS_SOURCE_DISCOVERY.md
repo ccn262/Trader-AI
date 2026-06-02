@@ -109,6 +109,37 @@ Recommended workflow:
 5. Review the stored evidence in Trader AI before adding any parser beyond the controlled validation path.
 6. Move to scheduled runs only after manual validation succeeds repeatedly and the source format is understood.
 
+## Diagnostic Workflow
+
+If the fetch returns real HTTP content but no valid announcement links are extracted, run the diagnostic-only inspection script before changing the parser.
+
+Diagnostic steps:
+
+1. Set `RNS_SOURCE_BASE_URL` to the exact page or feed you want to inspect.
+2. Run `npm run diagnose:rns-source`.
+3. Review the raw diagnostics:
+   - HTTP status
+   - content type
+   - response length
+   - page title
+   - anchor count
+   - first 20 hrefs
+   - likely RNS/news link count
+   - whether the page appears JavaScript-rendered
+4. Decide whether the source exposes plain HTML, RSS-like markup, or a JS-rendered shell.
+5. Only add parser logic after the diagnostic output shows the source shape clearly.
+
+## JavaScript-Rendered Sources
+
+Some announcement sources may return a page that looks empty or low-value to a simple server fetch because the content is loaded client-side.
+
+Rules:
+
+- A JS-rendered page may still be a valid source, but it is not suitable for simple HTML parsing until the rendering path is understood.
+- Diagnostics should be treated as read-only evidence of the source shape, not as ingestion output.
+- Do not enable unattended ingestion just because a page fetch succeeds.
+- If the source looks JS-rendered, the next step is to inspect the page structure and decide whether a different adapter strategy is needed.
+
 ## Validation Gate
 
 The real-source adapter must remain disabled unless all of the following are true:
