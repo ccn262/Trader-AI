@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { AppShell } from "@/components/app-shell";
 import { settingsGuardrails } from "@/lib/mock-data";
 import { getSettings } from "@/lib/data";
@@ -62,6 +64,23 @@ export default async function SettingsPage() {
               </div>
             ))}
           </div>
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-white/5 p-5 xl:col-span-2">
+          <p className="text-sm text-slate-400">Registry</p>
+          <h2 className="mt-2 text-xl font-semibold text-white">
+            Source candidate registry
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">
+            Review candidate sources, validation outcomes, and diagnostic
+            summaries before changing any ingestion logic.
+          </p>
+          <Link
+            href="/sources"
+            className="mt-5 inline-flex rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-white/20 hover:bg-white/10"
+          >
+            Open sources
+          </Link>
         </section>
       </div>
     </AppShell>

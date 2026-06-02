@@ -882,6 +882,92 @@ export const intelligenceSources = [
   },
 ] as const;
 
+export const sourceCandidates = [
+  {
+    id: "mock-source-candidate-lse-news-rejected",
+    name: "London Stock Exchange News",
+    sourceType: "rns",
+    url: "https://www.londonstockexchange.com/news",
+    accessMethod: "js_rendered",
+    status: "rejected",
+    confidenceScore: 60,
+    diagnosticStatus: "not_suitable_for_simple_parser",
+    diagnosticSummary:
+      "HTTP 200, title present, anchorCount 0, likelyRnsHrefCount 0, appearsJavaScriptRendered true",
+    lastCheckedAt: "2026-06-02T09:15:00Z",
+    notes:
+      "Reachable but not suitable for simple server-side parsing. Keep as a diagnostic reference only.",
+    createdAt: "2026-06-11T00:00:00Z",
+    updatedAt: "2026-06-11T00:00:00Z",
+  },
+  {
+    id: "mock-source-candidate-lse-news-validating",
+    name: "London Stock Exchange RNS/company announcements candidate",
+    sourceType: "rns",
+    url: "https://www.londonstockexchange.com/news",
+    accessMethod: "js_rendered",
+    status: "validating",
+    confidenceScore: 70,
+    diagnosticStatus: "diagnostic_required",
+    diagnosticSummary:
+      "Candidate source tracked for future parser work; requires manual validation before any ingestion change.",
+    lastCheckedAt: null,
+    notes: "Keep manual-first. Do not force scraping or unattended crawling.",
+    createdAt: "2026-06-11T00:00:00Z",
+    updatedAt: "2026-06-11T00:00:00Z",
+  },
+  {
+    id: "mock-source-candidate-company-ir",
+    name: "Company investor relations pages",
+    sourceType: "company_ir",
+    url: null,
+    accessMethod: "manual",
+    status: "manual_only",
+    confidenceScore: 85,
+    diagnosticStatus: "future_candidate_category",
+    diagnosticSummary:
+      "Official issuer pages are useful for manual review and future validation, but coverage and formatting vary by company.",
+    lastCheckedAt: null,
+    notes:
+      "Track as a future source category rather than a single parse target.",
+    createdAt: "2026-06-11T00:00:00Z",
+    updatedAt: "2026-06-11T00:00:00Z",
+  },
+  {
+    id: "mock-source-candidate-paid-provider",
+    name: "Paid structured provider",
+    sourceType: "provider",
+    url: null,
+    accessMethod: "paid_provider",
+    status: "paid_required",
+    confidenceScore: 90,
+    diagnosticStatus: "commercial_access_required",
+    diagnosticSummary:
+      "A structured feed or API may be useful later, but access is commercial and should not be assumed available.",
+    lastCheckedAt: null,
+    notes:
+      "Future option only; do not build around unavailable commercial access.",
+    createdAt: "2026-06-11T00:00:00Z",
+    updatedAt: "2026-06-11T00:00:00Z",
+  },
+  {
+    id: "mock-source-candidate-sec-filings",
+    name: "SEC filings",
+    sourceType: "sec",
+    url: "https://www.sec.gov/edgar/search/",
+    accessMethod: "api",
+    status: "validated",
+    confidenceScore: 95,
+    diagnosticStatus: "validated_future_source_type",
+    diagnosticSummary:
+      "Validated future source type for US filings if a US source path is later required.",
+    lastCheckedAt: null,
+    notes: "High-confidence future source class for US disclosures.",
+    createdAt: "2026-06-11T00:00:00Z",
+    updatedAt: "2026-06-11T00:00:00Z",
+  },
+] as const;
+
 export const rawAnnouncements = [
   {
     id: "raw-rns-mock-final-results-rr",

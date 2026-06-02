@@ -249,3 +249,16 @@ Impact:
 - It reports response metadata, title, anchor counts, href samples, and a JS-rendered heuristic.
 - JS-rendered sources are explicitly called out as potentially unsuitable for simple server-side parsing.
 - Diagnostics should run before parser changes and before any further validation or scheduler work.
+
+## 2026-06-02 - Source candidate registry
+
+Decision: Add a source candidate registry to track status, access method, confidence, and diagnostic outcomes for candidate intelligence sources.
+
+Reason: The real-source path needs a durable way to distinguish validated sources from rejected, paid-only, or manual-only candidates without forcing scraping or confusing mock references with real evidence.
+
+Impact:
+
+- The registry provides a read-only summary of candidate sources on `/sources`.
+- LSE `/news` remains tracked as JS-rendered and rejected for simple parsing.
+- Manual-only and paid-required candidates stay clearly separated from validated sources.
+- The registry is governance-only and does not enable live ingestion or cron changes.

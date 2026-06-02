@@ -217,3 +217,17 @@ Future implementation should:
 - Preserve a mock/demo fallback so the app remains usable before live source discovery is switched on.
 - Treat placeholder or demo URLs as evidence-unavailable or internal-demo references, never as verified external proof.
 - During real-source validation, only persist URLs that pass the external evidence check and reject mock/demo URLs before they reach trusted storage.
+
+## Source Candidate Registry
+
+Trader AI should use a source candidate registry to track discovery, validation, rejection, and access constraints before any source is wired into a parser.
+
+Rules:
+
+- Record the source status, access method, confidence score, diagnostic summary, and last checked time.
+- Mark JS-rendered sources as requiring special handling instead of forcing them into a simple HTML parser.
+- Mark commercial feeds as `paid_required` rather than assuming access will be available.
+- Keep manual-only issuer pages separate from automated parser candidates.
+- Use the registry to document why a source is rejected, not just whether it worked once.
+
+The registry definition lives in [docs/SOURCE_CANDIDATE_REGISTRY.md](./SOURCE_CANDIDATE_REGISTRY.md).

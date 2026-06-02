@@ -88,6 +88,7 @@ RNS source discovery:
 - `npm run ingest:rns:real` is a manual validation path for the real source adapter.
 - Real-source discovery is manual-first and config-gated; it is not enabled for unattended scans by default.
 - Real validation requires `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true`.
+- The source candidate registry lives at `/sources` and tracks candidate, validating, validated, rejected, paid-required, and manual-only sources.
 
 ## First milestone
 
