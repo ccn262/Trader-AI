@@ -20,6 +20,27 @@ Slick, calm, mobile-first, and easy to read. The app should feel like a lightwei
 5. One primary action per screen.
 6. Warnings should be visible but not frightening.
 
+## Attention hierarchy
+
+Trader AI should make the most important thing obvious within a second.
+
+Priority colours:
+
+- Red: urgent, high-risk, review now, avoid
+- Amber: watch today, medium priority, review reminders
+- Green: healthy, low-risk, on track, completed
+- Blue: informational, core, long-term, calm
+- Purple: speculative, penny share, high volatility
+
+Usage rules:
+
+- Red is reserved for urgent or high-risk states only.
+- Amber is for items that deserve attention today but are not urgent.
+- Green is for healthy or completed states, or stable cash/core tracking.
+- Blue is for calm, core, long-term information that should not feel noisy.
+- Purple is for speculative or high-volatility ideas that need extra caution.
+- Every priority chip or card must include text and/or an icon, not colour alone.
+
 ## Suggested UI structure
 
 ### Mobile navigation
@@ -123,11 +144,21 @@ Suggested tokens:
 
 Status colours:
 
-- Buy Zone: green, but never with hype wording
-- Watch: blue
-- Wait: amber
+- Review now: red
+- Watch today: amber
+- On track / healthy: green
+- Core / long-term: blue
+- Speculative / high volatility: purple
 - Avoid: red
-- Hold: neutral
+
+Card guidance:
+
+- High-priority review cards should use red accents.
+- Watch-today cards should use amber accents.
+- Healthy or completed cards should use green accents.
+- Core long-term cards should use blue accents.
+- Speculative and penny-share cards should use purple accents.
+- Do not use the same colour for every card state.
 
 ## Typography
 
@@ -145,10 +176,11 @@ Status colours:
 
 ## Accessibility
 
-- Colour should not be the only status indicator.
-- Include labels: Buy Zone, Watch, Wait, Avoid.
-- Use sufficient contrast.
-- Support keyboard navigation on desktop.
+- Colour should never be the only status indicator.
+- Include labels such as Review, Watch, Monitor, Reassess, Avoid, Core, and Healthy.
+- Pair colour with icons, badges, and short explanatory text.
+- Use sufficient contrast in both light and dark surfaces.
+- Support keyboard navigation on desktop and readable touch targets on mobile.
 
 ## Tone of interface copy
 

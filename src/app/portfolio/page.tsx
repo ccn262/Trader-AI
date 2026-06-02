@@ -1,5 +1,9 @@
 import Link from "next/link";
 
+import {
+  AttentionPanel,
+  PriorityBadge,
+} from "@/components/attention";
 import { AppShell } from "@/components/app-shell";
 import {
   archivePortfolioPositionAction,
@@ -8,6 +12,16 @@ import {
 import { formatCurrency } from "@/lib/mock-data";
 import { getAssets, getPortfolioPositions } from "@/lib/data";
 import { hasSupabaseConfig } from "@/lib/supabase/server";
+
+function getPositionTone(ticker: string, strategy: string, pnl: number) {
+  if (ticker === "VWRP") return "core" as const;
+  if (ticker === "CASH") return "healthy" as const;
+  if (ticker === "PLTR") return "speculative" as const;
+  if (pnl < 0) return "urgent" as const;
+  if (strategy === "swing") return "watch" as const;
+  if (strategy === "learning") return "speculative" as const;
+  return "healthy" as const;
+}
 
 export default async function PortfolioPage() {
   const portfolioPositions = await getPortfolioPositions();
@@ -24,12 +38,16 @@ export default async function PortfolioPage() {
       subtitle="Manual positions only. Decision support only. Trades are placed manually outside this app."
     >
       <div className="space-y-6">
-        <section className="rounded-[32px] border border-amber-300/20 bg-amber-300/10 p-4 text-amber-50">
-          <p className="font-semibold">Decision support only</p>
-          <p className="mt-2 text-sm leading-6 text-amber-50/90">
+        <AttentionPanel
+          tone="core"
+          eyebrow="Decision support only"
+          title="Portfolio overview"
+          subtitle="Keep the core allocation calm, treat cash as a position, and make manual records easy to scan on mobile."
+        >
+          <p className="text-sm leading-6 text-slate-200/90">
             Trades are placed manually outside this app.
           </p>
-        </section>
+        </AttentionPanel>
 
         <section className="rounded-[32px] border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -40,17 +58,19 @@ export default async function PortfolioPage() {
               </p>
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+              <div className="rounded-3xl border border-sky-300/20 bg-sky-300/10 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-sky-100/70">
                   Core strategy
                 </p>
-                <p className="mt-2 text-lg font-semibold text-white">Manual</p>
+                <p className="mt-2 text-lg font-semibold text-sky-50">Manual</p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+              <div className="rounded-3xl border border-emerald-300/20 bg-emerald-300/10 px-4 py-3">
+                <p className="text-xs uppercase tracking-[0.3em] text-emerald-100/70">
                   Current mode
                 </p>
-                <p className="mt-2 text-lg font-semibold text-white">Beginner</p>
+                <p className="mt-2 text-lg font-semibold text-emerald-50">
+                  Beginner
+                </p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -189,10 +209,12 @@ export default async function PortfolioPage() {
               </div>
             </form>
           ) : (
-            <p className="mt-4 rounded-3xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-              Connect Supabase to record or update positions. The current
-              portfolio view still works in mock mode.
-            </p>
+            <AttentionPanel
+              tone="watch"
+              title="Supabase fallback"
+              subtitle="Connect Supabase to record or update positions. The current portfolio view still works in mock mode."
+              className="mt-4"
+            />
           )}
         </section>
 
@@ -201,18 +223,48 @@ export default async function PortfolioPage() {
             portfolioPositions.map((position) => {
               const marketValue = position.quantity * position.currentPrice;
               const gain = marketValue - position.quantity * position.averageBuyPrice;
+              const tone = getPositionTone(
+                position.ticker,
+                position.strategy,
+                gain,
+              );
 
               return (
                 <article
                   key={position.id}
-                  className="rounded-[32px] border border-white/10 bg-white/5 p-5"
+                  className={[
+                    "rounded-[32px] border p-5",
+                    tone === "urgent"
+                      ? "border-rose-300/30 bg-rose-300/10"
+                      : tone === "watch"
+                        ? "border-amber-300/30 bg-amber-300/10"
+                        : tone === "speculative"
+                          ? "border-violet-300/30 bg-violet-300/10"
+                          : tone === "healthy"
+                            ? "border-emerald-300/30 bg-emerald-300/10"
+                            : "border-sky-300/30 bg-sky-300/10",
+                  ].join(" ")}
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div>
-                      <p className="text-lg font-semibold text-white">
-                        {position.ticker}
-                      </p>
-                      <p className="mt-1 text-sm text-slate-400">{position.name}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-lg font-semibold text-white">
+                          {position.ticker}
+                        </p>
+                        <PriorityBadge
+                          tone={tone}
+                          label={
+                            position.ticker === "CASH"
+                              ? "Healthy"
+                              : position.strategy === "core"
+                                ? "Core"
+                                : position.strategy === "swing"
+                                  ? "Watch"
+                                  : "Speculative"
+                          }
+                        />
+                      </div>
+                      <p className="mt-1 text-sm text-slate-100/80">{position.name}</p>
                     </div>
                     <Link
                       href={`/assets/${position.ticker}`}
@@ -223,7 +275,7 @@ export default async function PortfolioPage() {
                   </div>
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/55 p-4">
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                         Quantity
                       </p>
@@ -231,7 +283,7 @@ export default async function PortfolioPage() {
                         {position.quantity}
                       </p>
                     </div>
-                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/55 p-4">
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                         Market value
                       </p>
@@ -239,15 +291,37 @@ export default async function PortfolioPage() {
                         {formatCurrency(marketValue)}
                       </p>
                     </div>
-                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/55 p-4">
                       <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                         P/L
                       </p>
-                      <p className="mt-2 text-lg font-semibold text-white">
+                      <p
+                        className={[
+                          "mt-2 text-lg font-semibold",
+                          gain >= 0 ? "text-emerald-50" : "text-rose-50",
+                        ].join(" ")}
+                      >
                         {gain >= 0 ? "+" : ""}
                         {formatCurrency(gain)}
                       </p>
                     </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <PriorityBadge
+                      tone={tone}
+                      label={
+                        position.ticker === "CASH"
+                          ? "On track"
+                          : gain >= 0
+                            ? "Healthy"
+                            : "Needs review"
+                      }
+                    />
+                    <PriorityBadge
+                      tone={tone}
+                      label={`Target ${position.targetAllocation}%`}
+                    />
                   </div>
 
                   {writable ? (
@@ -335,17 +409,22 @@ export default async function PortfolioPage() {
                       </form>
                     </div>
                   ) : (
-                    <p className="mt-4 rounded-3xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-                      Supabase is required to update or close records.
-                    </p>
+                    <AttentionPanel
+                      tone="watch"
+                      title="Supabase required"
+                      subtitle="Update or close records once Supabase is configured."
+                      className="mt-4"
+                    />
                   )}
                 </article>
               );
             })
           ) : (
-            <p className="rounded-[32px] border border-dashed border-white/10 bg-white/5 p-5 text-sm text-slate-300">
-              No manual positions recorded yet. Add one above to track a record.
-            </p>
+            <AttentionPanel
+              tone="healthy"
+              title="No manual positions recorded yet"
+              subtitle="Add one above to track a record."
+            />
           )}
         </section>
       </div>
