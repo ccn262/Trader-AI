@@ -140,3 +140,15 @@ Impact:
 - `intelligence_items` now carry classification, impact direction, impact score, risk level, priority, scoring reason, and scoring timestamp fields.
 - Re-running the scoring pass should be idempotent and should only add `score_history` rows when the effective scored state changes.
 - Speculative mining/resource updates and going-concern style warnings keep explicit higher-risk framing.
+
+## 2026-06-02 - Negative impact score support
+
+Decision: Allow negative `impact_score` and `score_history.score` values for adverse announcements.
+
+Reason: Deterministic scoring needs to represent downside, dilution, and going-concern events without flattening them into a nonnegative scale.
+
+Impact:
+
+- The `intelligence_items.impact_score` constraint now supports `-100` to `+100`.
+- Negative values can be recorded for adverse announcements and risk-heavy events.
+- `score_history` remains compatible with negative scores so scoring deltas still make sense.

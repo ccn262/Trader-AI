@@ -62,6 +62,22 @@ Meaning:
 - `unknown`: not enough structured evidence to classify confidently
 - `speculative`: evidence is potentially catalytic but highly uncertain
 
+## Impact Score Range
+
+Impact scores must use a signed range from `-100` to `+100`.
+
+Meaning:
+
+- Negative scores: adverse or risk-heavy events
+- `0`: neutral or unknown impact
+- Positive scores: constructive or catalytic events
+
+Guidance:
+
+- Larger negative magnitudes should be reserved for severe downside, dilution, or going-concern risk.
+- Larger positive magnitudes should be reserved for material, well-supported catalysts.
+- The score remains deterministic and evidence-based rather than predictive certainty.
+
 ## Deterministic Impact Rules
 
 ### Positive Catalyst Examples
