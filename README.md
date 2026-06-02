@@ -41,6 +41,12 @@ Optional environment variables for future browser-side work:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
+Optional environment variables for RNS source discovery:
+
+- `RNS_SOURCE_MODE=mock|real`
+- `RNS_SOURCE_BASE_URL`
+- `RNS_SOURCE_API_KEY` if a future provider requires one
+
 The current app reads from Supabase on the server when configured, and falls back to local mock data when the variables are missing.
 
 ## Scan orchestration
@@ -52,6 +58,8 @@ Local commands:
 - `npm run scan:manual`
 - `npm run scan:morning`
 - `npm run scan:evening`
+- `npm run ingest:rns:mock`
+- `npm run ingest:rns:real`
 
 Manual API trigger:
 
@@ -70,6 +78,13 @@ Security warning:
 
 - Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TRADER_AI_ADMIN_SECRET`, or `CRON_SECRET` client-side.
 - Keep them in server-only environment variables.
+- Keep `RNS_SOURCE_API_KEY` and any future real-source credentials server-side too.
+
+RNS source discovery:
+
+- `npm run ingest:rns:mock` keeps using the mock/demo source and the existing safe ingestion pipeline.
+- `npm run ingest:rns:real` is a manual validation path for the real source adapter.
+- Real-source discovery is manual-first and config-gated; it is not enabled for unattended scans by default.
 
 ## First milestone
 

@@ -210,3 +210,16 @@ Impact:
 - `/alerts` now distinguishes real external sources from demo/sample evidence and unavailable evidence.
 - `/intelligence/[id]` provides a safe internal review page for announcement evidence and clearly labels mock/demo records.
 - Missing source links are shown as unavailable rather than routed to a broken or misleading destination.
+
+## 2026-06-02 - Real RNS source discovery
+
+Decision: Add a manual-first source-adapter layer for real RNS discovery while keeping mock/demo ingestion as the default fallback.
+
+Reason: The app needs a safe way to validate a real announcement source without converting unverified connectivity into unattended ingestion or fake evidence trust.
+
+Impact:
+
+- Mock/demo RNS ingestion remains the default scan path.
+- Real-source discovery is opt-in via `RNS_SOURCE_MODE=real` and `RNS_SOURCE_BASE_URL`.
+- The adapter boundary makes it possible to validate a source before adding a parser or scheduler.
+- Unvalidated real-source output must not be treated as verified evidence or alert input.
