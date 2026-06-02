@@ -27,3 +27,6 @@
 - Added Phase 7 Supabase support for `raw_announcements` and intelligence-item links in `supabase/migrations/20260605_phase7_rns_ingestion.sql`.
 - Added a server-side RNS ingestion module and a manual mock ingestion script for development-safe announcement parsing, deduplication, and storage.
 - Added a compact read-only recent-intelligence section on `/alerts` so RNS-derived evidence can be reviewed without creating execution flows.
+- Tightened RNS mock-ingestion deduplication across `scripts/ingest-rns-mock.mjs` and `src/lib/ingestion/rns.ts` using `external_id`, `source_url`, and `asset_symbol + headline + published_at`.
+- Added `supabase/migrations/20260606_fix_rns_deduplication.sql` with database-side duplicate protection for raw announcements and supporting lookup indexes.
+- Updated `docs/RNS_INGESTION_SPEC.md` with explicit deduplication rules and read-only SQL snippets for duplicate inspection.
