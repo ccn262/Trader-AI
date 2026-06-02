@@ -3,7 +3,7 @@ import { resolve } from "node:path"
 import { createClient } from "@supabase/supabase-js"
 import dotenv from "dotenv"
 
-dotenv.config({ path: resolve(process.cwd(), ".env.local") })
+dotenv.config({ path: resolve(process.cwd(), ".env.local"), quiet: true })
 
 const sourceId = "3dbfbf7f-ae35-48a4-a9fd-3d1de09a6fd9"
 const scanRunId = "1b7f5fb7-8e69-4ccd-a8e7-9d0242052601"
