@@ -40,6 +40,44 @@ export type AlertItem = {
   due: string;
 };
 
+export type OpportunityScan = {
+  label: "Morning Scan" | "Evening Scan";
+  title: string;
+  summary: string;
+  bullets: string[];
+};
+
+export type OpportunityAlert = {
+  symbol: string;
+  name: string;
+  market: "LSE" | "NYSE" | "NASDAQ" | "AIM";
+  opportunityType:
+    | "Long-term investment"
+    | "Swing trade"
+    | "Penny share catalyst"
+    | "Mining/resource catalyst"
+    | "Earnings momentum"
+    | "Special situation"
+    | "ETF/sector rotation";
+  catalystSummary: string;
+  score: number;
+  sourceConfidence: string;
+  suggestedPositionRange: string;
+  suggestedHoldTimeframe: string;
+  exitPlan: string;
+  riskWarning: string;
+  evidencePlaceholders: string[];
+  filterTags: Array<
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Penny shares"
+    | "Long-term"
+    | "Swing trades"
+  >;
+  scan: "Morning" | "Evening";
+};
+
 export const summaryCards = [
   {
     label: "Portfolio value",
@@ -251,6 +289,144 @@ export const alerts: AlertItem[] = [
     due: "Fri",
   },
 ];
+
+export const opportunityScans: OpportunityScan[] = [
+  {
+    label: "Morning Scan",
+    title: "What changed overnight",
+    summary:
+      "Focus on fresh evidence, new catalysts, and items that crossed a review threshold.",
+    bullets: [
+      "Market health and risk appetite",
+      "New opportunities and filings",
+      "High-priority reviews for today",
+    ],
+  },
+  {
+    label: "Evening Scan",
+    title: "What deserves follow-up",
+    summary:
+      "Close the loop on today’s evidence and prepare tomorrow’s review list.",
+    bullets: [
+      "Market summary and portfolio review",
+      "Watchlist score changes",
+      "Tomorrow’s opportunity candidates",
+    ],
+  },
+] as const;
+
+export const opportunityAlerts: OpportunityAlert[] = [
+  {
+    symbol: "VWRP",
+    name: "Vanguard FTSE All-World UCITS ETF",
+    market: "LSE",
+    opportunityType: "Long-term investment",
+    catalystSummary:
+      "Broad global exposure remains aligned with the core long-term allocation plan.",
+    score: 84,
+    sourceConfidence: "High",
+    suggestedPositionRange: "£10-£20",
+    suggestedHoldTimeframe: "Weeks to months",
+    exitPlan: "Reassess if allocation drifts or the thesis changes materially.",
+    riskWarning:
+      "Market risk remains present even when the thesis is simple.",
+    evidencePlaceholders: [
+      "ETF composition placeholder",
+      "Market breadth placeholder",
+      "Allocation review placeholder",
+    ],
+    filterTags: ["High-priority review", "Long-term"],
+    scan: "Morning",
+  },
+  {
+    symbol: "MSFT",
+    name: "Microsoft Corporation",
+    market: "NASDAQ",
+    opportunityType: "Earnings momentum",
+    catalystSummary:
+      "Earnings and guidance context may justify a fresh review of the current setup.",
+    score: 79,
+    sourceConfidence: "Medium-high",
+    suggestedPositionRange: "£5-£15",
+    suggestedHoldTimeframe: "Days to weeks",
+    exitPlan: "Reassess after earnings follow-through or if momentum fades.",
+    riskWarning:
+      "Post-earnings moves can reverse quickly if the market disagrees.",
+    evidencePlaceholders: [
+      "Earnings transcript placeholder",
+      "Guidance revision placeholder",
+      "Relative strength placeholder",
+    ],
+    filterTags: ["High-priority review", "Watch today", "Swing trades"],
+    scan: "Morning",
+  },
+  {
+    symbol: "NVDA",
+    name: "NVIDIA Corporation",
+    market: "NASDAQ",
+    opportunityType: "Swing trade",
+    catalystSummary:
+      "High momentum and active sector attention create a review-worthy setup.",
+    score: 74,
+    sourceConfidence: "Medium",
+    suggestedPositionRange: "£5-£10",
+    suggestedHoldTimeframe: "Days to weeks",
+    exitPlan: "Reassess if volume weakens or the trend structure breaks.",
+    riskWarning:
+      "Volatility is elevated and position sizing should stay disciplined.",
+    evidencePlaceholders: [
+      "Price action placeholder",
+      "Volume confirmation placeholder",
+      "News catalyst placeholder",
+    ],
+    filterTags: ["Watch today", "Swing trades"],
+    scan: "Evening",
+  },
+  {
+    symbol: "RR.L",
+    name: "Rolls-Royce Holdings plc",
+    market: "LSE",
+    opportunityType: "Special situation",
+    catalystSummary:
+      "Event-driven interest warrants a structured review rather than a rushed decision.",
+    score: 67,
+    sourceConfidence: "Medium",
+    suggestedPositionRange: "£5-£10",
+    suggestedHoldTimeframe: "Event window",
+    exitPlan: "Reassess after the catalyst or if the event thesis loses support.",
+    riskWarning:
+      "Headline risk and event risk can move faster than the thesis.",
+    evidencePlaceholders: [
+      "RNS placeholder",
+      "Event calendar placeholder",
+      "Company update placeholder",
+    ],
+    filterTags: ["Monitor only"],
+    scan: "Evening",
+  },
+  {
+    symbol: "PLTR",
+    name: "Palantir Technologies Inc.",
+    market: "NYSE",
+    opportunityType: "Penny share catalyst",
+    catalystSummary:
+      "Narrative-driven interest is present, but evidence quality must remain tight.",
+    score: 46,
+    sourceConfidence: "Low-medium",
+    suggestedPositionRange: "£1-£5",
+    suggestedHoldTimeframe: "Short review cycle",
+    exitPlan: "Reassess quickly if the catalyst does not earn confirmation.",
+    riskWarning:
+      "Volatility and narrative risk remain high for smaller accounts.",
+    evidencePlaceholders: [
+      "Social sentiment placeholder",
+      "News catalyst placeholder",
+      "Liquidity placeholder",
+    ],
+    filterTags: ["Penny shares", "Watch today"],
+    scan: "Morning",
+  },
+] as const;
 
 export const settingsGuardrails = [
   "Decision support only, not financial advice.",

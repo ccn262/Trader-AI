@@ -19,12 +19,13 @@ Use this file to keep Codex and future sessions aligned.
 - Watchlists, portfolio, journal, and alerts now support create/edit/archive/review flows when Supabase is available.
 - `docs/TRADER_AI_CONSTITUTION.md` now serves as the master authority for future work.
 - Phase 4 planning docs are being added for intelligence, opportunity, risk, data source, scanner, and daily briefing architecture.
+- Phase 5 mock-first Opportunity Alerts UI is being added on `/alerts` with scan cards, filters, and review-only alert cards.
 
 ## Next recommended action
 
-1. Review the Phase 4 planning docs and confirm the architecture direction before implementation.
-2. Provision Supabase and run the migrations if they have not already been applied.
-3. Test the CRUD flows against the live database and confirm the archive/review paths behave as expected.
+1. Verify the Opportunity Alerts UI in the browser and confirm the mobile layout behaves correctly.
+2. Review the Phase 4 planning docs and confirm the architecture direction before implementation.
+3. Provision Supabase and run the migrations if they have not already been applied.
 
 ## Codex starter instruction
 

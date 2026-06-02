@@ -74,3 +74,16 @@ Impact:
 - Future work must align to the constitution first.
 - Planning documents can define implementation detail, but not override the constitution.
 - README and Codex brief should point contributors to the constitution before any new work starts.
+
+## 2026-06-02 - Opportunity alerts UI scope
+
+Decision: Build Phase 5 as a mock-first Opportunity Alerts UI on the existing alerts route, using alert cards, scan cards, filters, and empty states.
+
+Reason: The user asked for a review-oriented alert experience that supports morning and evening scans without introducing live feeds, broker actions, or AI API calls.
+
+Impact:
+
+- The UI remains decision support only.
+- Alert cards must use “Review opportunity” wording and avoid buy language.
+- Filters and empty states improve scan usability on mobile.
+- Mock data remains the only source for this phase.
