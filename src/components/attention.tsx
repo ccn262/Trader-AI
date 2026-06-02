@@ -92,6 +92,7 @@ export function getAttentionToneFromStatus(
 
 export function getToneFromRiskLevel(riskLevel: string): AttentionTone {
   const normalized = riskLevel.toLowerCase();
+  if (normalized.includes("critical")) return "urgent";
   if (normalized.includes("spec")) return "speculative";
   if (normalized.includes("high")) return "urgent";
   if (normalized.includes("medium")) return "watch";

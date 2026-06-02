@@ -217,6 +217,7 @@ export interface RawAnnouncementRow {
 export interface OpportunityAlertRow {
   id: string;
   scan_run_id: string | null;
+  source_intelligence_item_id: string | null;
   asset_symbol: string;
   asset_name: string;
   market: string | null;
@@ -232,7 +233,8 @@ export interface OpportunityAlertRow {
     | "high_priority_review"
     | "watch_today"
     | "monitor_only"
-    | "speculative_review";
+    | "speculative_review"
+    | "avoid_or_reassess";
   catalyst_summary: string;
   score: number;
   source_confidence: number | null;
@@ -242,6 +244,11 @@ export interface OpportunityAlertRow {
   suggested_hold_timeframe: string | null;
   exit_plan: string | null;
   risk_warning: string | null;
+  generated_by: string;
+  generation_reason: string | null;
+  invalidation_notes: string | null;
+  review_by: string | null;
+  confidence_label: string | null;
   review_status: "new" | "reviewed" | "ignored" | "archived";
   archived: boolean;
   created_at: string;
@@ -256,6 +263,8 @@ export interface OpportunityEvidenceRow {
   evidence_summary: string | null;
   source_url: string | null;
   confidence_score: number | null;
+  evidence_type: string | null;
+  is_primary: boolean;
   created_at: string;
 }
 
