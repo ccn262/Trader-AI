@@ -95,11 +95,27 @@ export type RecentIntelligenceItem = {
   companyName: string;
   headline: string;
   announcementType: string;
+  classification: string;
   source: string;
   sourceConfidence: string;
   sourceConfidenceScore: number;
   verificationStatus: "Verified" | "Partially verified" | "Unverified" | "Failed";
   impactScore: number;
+  impactDirection:
+    | "Positive"
+    | "Negative"
+    | "Neutral"
+    | "Mixed"
+    | "Unknown"
+    | "Speculative";
+  riskLevel: "Low" | "Medium" | "High" | "Speculative" | "Critical";
+  priority:
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Speculative review"
+    | "Avoid or reassess";
+  scoringReason: string;
   publishedAt: string;
   riskLabel: "Core" | "Watch" | "Speculative" | "Urgent";
 };
@@ -539,11 +555,17 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     companyName: "Rolls-Royce Holdings plc",
     headline: "Final results show improving cash generation and order visibility",
     announcementType: "Final results",
+    classification: "final_results",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Verified",
-    impactScore: 82,
+    impactScore: 18,
+    impactDirection: "Positive",
+    riskLevel: "Medium",
+    priority: "Watch today",
+    scoringReason:
+      "Official results language appears constructive and worth reviewing.",
     publishedAt: "2026-06-02T07:05:00Z",
     riskLabel: "Watch",
   },
@@ -551,15 +573,21 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     id: "rns-mock-trading-update-itm",
     assetSymbol: "ITM.L",
     companyName: "ITM Power plc",
-    headline: "Trading update highlights slower conversion and revised expectations",
+    headline: "Trading update highlights a mixed demand picture and revised expectations",
     announcementType: "Trading update",
+    classification: "trading_update",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Verified",
-    impactScore: 74,
+    impactScore: -8,
+    impactDirection: "Mixed",
+    riskLevel: "High",
+    priority: "High-priority review",
+    scoringReason:
+      "Trading update language is mixed and needs context before stronger action.",
     publishedAt: "2026-06-02T07:12:00Z",
-    riskLabel: "Urgent",
+    riskLabel: "Watch",
   },
   {
     id: "rns-mock-director-dealing-barc",
@@ -567,11 +595,17 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     companyName: "Barclays plc",
     headline: "Director dealing discloses a modest open-market purchase",
     announcementType: "Director dealings",
+    classification: "director_dealings",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Verified",
-    impactScore: 38,
+    impactScore: 8,
+    impactDirection: "Positive",
+    riskLevel: "Medium",
+    priority: "Monitor only",
+    scoringReason:
+      "Director purchase language is mildly constructive, but not urgent.",
     publishedAt: "2026-06-02T07:18:00Z",
     riskLabel: "Core",
   },
@@ -581,11 +615,17 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     companyName: "SolGold plc",
     headline: "Drill results report additional mineralisation in a follow-up update",
     announcementType: "Drill results",
+    classification: "drill_results",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Partially verified",
-    impactScore: 67,
+    impactScore: 22,
+    impactDirection: "Speculative",
+    riskLevel: "Speculative",
+    priority: "Speculative review",
+    scoringReason:
+      "Official drilling language may be catalytic, but it remains speculative and high risk.",
     publishedAt: "2026-06-02T07:25:00Z",
     riskLabel: "Speculative",
   },
@@ -595,11 +635,17 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     companyName: "Anglesey Mining plc",
     headline: "Placing and fundraising announced to support ongoing project work",
     announcementType: "Placing/fundraising",
+    classification: "placing_fundraising",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Verified",
-    impactScore: 71,
+    impactScore: -22,
+    impactDirection: "Negative",
+    riskLevel: "High",
+    priority: "High-priority review",
+    scoringReason:
+      "Fundraising wording raises dilution and financing risk, so the item needs review.",
     publishedAt: "2026-06-02T07:31:00Z",
     riskLabel: "Speculative",
   },
@@ -609,11 +655,17 @@ export const recentIntelligenceItems: RecentIntelligenceItem[] = [
     companyName: "Example Resources plc",
     headline: "Going concern warning issued alongside financing uncertainty",
     announcementType: "Going concern warning",
+    classification: "going_concern_warning",
     source: "London Stock Exchange RNS",
     sourceConfidence: "High",
     sourceConfidenceScore: 95,
     verificationStatus: "Verified",
-    impactScore: 92,
+    impactScore: -40,
+    impactDirection: "Negative",
+    riskLevel: "Critical",
+    priority: "Avoid or reassess",
+    scoringReason:
+      "Going concern language creates critical financing risk and requires reassessment.",
     publishedAt: "2026-06-02T07:42:00Z",
     riskLabel: "Urgent",
   },

@@ -1,5 +1,13 @@
 import "server-only";
 
+import {
+  classifyAnnouncement,
+  mapImpactToPriority,
+  scoreAnnouncementImpact,
+  type AnnouncementImpactDirection,
+  type AnnouncementPriority,
+  type AnnouncementRiskLevel,
+} from "./scoring/announcement-impact";
 import { getSupabaseClient, hasSupabaseConfig } from "./supabase/server";
 import type {
   AiScoreRow,
@@ -158,11 +166,21 @@ export type RecentIntelligenceViewModel = {
   companyName: string;
   headline: string;
   announcementType: string;
+  classification: string;
   source: string;
   sourceConfidence: string;
   sourceConfidenceScore: number;
   verificationStatus: "Verified" | "Partially verified" | "Unverified" | "Failed";
   impactScore: number;
+  impactDirection: "Positive" | "Negative" | "Neutral" | "Mixed" | "Unknown" | "Speculative";
+  riskLevel: "Low" | "Medium" | "High" | "Speculative" | "Critical";
+  priority:
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Speculative review"
+    | "Avoid or reassess";
+  scoringReason: string;
   publishedAt: string;
   riskLabel: "Core" | "Watch" | "Speculative" | "Urgent";
 };
@@ -385,20 +403,76 @@ function formatAnnouncementType(value: string | null | undefined) {
     .join(" ");
 }
 
+function formatClassificationLabel(value: string | null | undefined) {
+  return formatAnnouncementType(value);
+}
+
+function formatImpactDirectionLabel(
+  value: AnnouncementImpactDirection | string | null | undefined,
+): RecentIntelligenceViewModel["impactDirection"] {
+  switch ((value ?? "").toLowerCase()) {
+    case "positive":
+      return "Positive";
+    case "negative":
+      return "Negative";
+    case "neutral":
+      return "Neutral";
+    case "mixed":
+      return "Mixed";
+    case "speculative":
+      return "Speculative";
+    default:
+      return "Unknown";
+  }
+}
+
+function formatRiskLevelLabel(
+  value: AnnouncementRiskLevel | string | null | undefined,
+): RecentIntelligenceViewModel["riskLevel"] {
+  switch ((value ?? "").toLowerCase()) {
+    case "low":
+      return "Low";
+    case "medium":
+      return "Medium";
+    case "high":
+      return "High";
+    case "speculative":
+      return "Speculative";
+    case "critical":
+      return "Critical";
+    default:
+      return "Medium";
+  }
+}
+
+function formatPriorityLabel(
+  value: AnnouncementPriority | string | null | undefined,
+): RecentIntelligenceViewModel["priority"] {
+  switch (value) {
+    case "high_priority_review":
+      return "High-priority review";
+    case "watch_today":
+      return "Watch today";
+    case "monitor_only":
+      return "Monitor only";
+    case "speculative_review":
+      return "Speculative review";
+    case "avoid_or_reassess":
+      return "Avoid or reassess";
+    default:
+      return "Monitor only";
+  }
+}
+
 function getRecentIntelligenceRiskLabel(
-  announcementType: string | null | undefined,
-  impactScore: number,
+  priority: RecentIntelligenceViewModel["priority"],
+  riskLevel: RecentIntelligenceViewModel["riskLevel"],
 ): RecentIntelligenceViewModel["riskLabel"] {
-  const normalized = (announcementType ?? "").toLowerCase();
-  if (normalized.includes("going_concern")) return "Urgent";
-  if (
-    normalized.includes("placing") ||
-    normalized.includes("drill") ||
-    normalized.includes("exploration")
-  ) {
+  if (priority === "Avoid or reassess" || riskLevel === "Critical") return "Urgent";
+  if (priority === "Speculative review" || riskLevel === "Speculative") {
     return "Speculative";
   }
-  if (impactScore >= 70) return "Watch";
+  if (priority === "High-priority review" || priority === "Watch today") return "Watch";
   return "Core";
 }
 
@@ -616,10 +690,47 @@ function mapRecentIntelligenceRow(
   intelligenceItem: IntelligenceItemRow | undefined,
   source: IntelligenceSourceRow | undefined,
 ): RecentIntelligenceViewModel {
-  const impactScore = Number(intelligenceItem?.impact_score ?? 0);
+  const deterministicScore = scoreAnnouncementImpact({
+    announcementType: rawAnnouncement.announcement_type ?? intelligenceItem?.classification,
+    headline: rawAnnouncement.headline,
+    rawCategory: rawAnnouncement.raw_category,
+    summary: intelligenceItem?.summary ?? "",
+    assetSymbol: rawAnnouncement.asset_symbol,
+    companyName: rawAnnouncement.company_name,
+  });
+  const classification =
+    intelligenceItem?.classification ??
+    classifyAnnouncement({
+      announcementType: rawAnnouncement.announcement_type,
+      headline: rawAnnouncement.headline,
+      rawCategory: rawAnnouncement.raw_category,
+      summary: intelligenceItem?.summary ?? "",
+    });
+  const impactScore = Number(
+    intelligenceItem?.impact_score ?? deterministicScore.impactScore ?? 0,
+  );
   const confidenceScore = Number(
     intelligenceItem?.source_confidence ?? source?.confidence_score ?? 0,
   );
+  const impactDirection = formatImpactDirectionLabel(
+    intelligenceItem?.impact_direction ?? deterministicScore.impactDirection,
+  );
+  const riskLevel = formatRiskLevelLabel(
+    intelligenceItem?.risk_level ?? deterministicScore.riskLevel,
+  );
+  const priority = formatPriorityLabel(
+    intelligenceItem?.priority ??
+      mapImpactToPriority({
+        classification: deterministicScore.classification,
+        impactDirection: deterministicScore.impactDirection,
+        impactScore: deterministicScore.impactScore,
+        riskLevel: deterministicScore.riskLevel,
+      }),
+  );
+  const scoringReason =
+    intelligenceItem?.scoring_reason ??
+    deterministicScore.scoringReason ??
+    "Review the announcement manually before drawing a conclusion.";
 
   return {
     id: rawAnnouncement.id,
@@ -627,6 +738,7 @@ function mapRecentIntelligenceRow(
     companyName: rawAnnouncement.company_name ?? "Unknown company",
     headline: rawAnnouncement.headline,
     announcementType: formatAnnouncementType(rawAnnouncement.announcement_type),
+    classification: formatClassificationLabel(classification),
     source: source?.name ?? "Unknown source",
     sourceConfidence: formatConfidenceLabel(confidenceScore),
     sourceConfidenceScore: confidenceScore,
@@ -634,13 +746,14 @@ function mapRecentIntelligenceRow(
       intelligenceItem?.verification_status ?? rawAnnouncement.ingestion_status,
     ),
     impactScore,
+    impactDirection,
+    riskLevel,
+    priority,
+    scoringReason,
     publishedAt: formatReviewDate(
       rawAnnouncement.published_at ?? rawAnnouncement.created_at,
     ),
-    riskLabel: getRecentIntelligenceRiskLabel(
-      rawAnnouncement.announcement_type,
-      impactScore,
-    ),
+    riskLabel: getRecentIntelligenceRiskLabel(priority, riskLevel),
   };
 }
 

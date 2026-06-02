@@ -388,14 +388,16 @@ export default async function AlertsPage({
 
                     <div className="mt-4 flex flex-wrap gap-2">
                       <PriorityBadge tone={tone} label={item.announcementType} />
+                      <PriorityBadge tone={tone} label={item.classification} />
                       <PriorityBadge tone="core" label={item.source} />
                       <PriorityBadge
                         tone={tone}
                         label={item.verificationStatus}
                       />
+                      <PriorityBadge tone={tone} label={item.priority} />
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                       <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                           Source confidence
@@ -409,6 +411,17 @@ export default async function AlertsPage({
                       </div>
                       <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Impact direction
+                        </p>
+                        <p className="mt-2 text-lg font-semibold text-white">
+                          {item.impactDirection}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Risk level {item.riskLevel}
+                        </p>
+                      </div>
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                           Published
                         </p>
                         <p className="mt-2 text-lg font-semibold text-white">
@@ -418,6 +431,15 @@ export default async function AlertsPage({
                           Stored as review-only intelligence
                         </p>
                       </div>
+                    </div>
+
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Scoring reason
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">
+                        {item.scoringReason}
+                      </p>
                     </div>
                   </article>
                 );

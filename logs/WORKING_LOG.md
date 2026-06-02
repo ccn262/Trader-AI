@@ -26,12 +26,14 @@ Use this file to keep Codex and future sessions aligned.
 - `/alerts` now has a small read-only recent-intelligence section for RNS-derived evidence, including source confidence, verification status, and impact placeholders.
 - RNS mock ingestion deduplication has been tightened so repeated runs reuse existing rows using `external_id`, `source_url`, or `asset_symbol + headline + published_at`.
 - A follow-up migration now adds stronger raw-announcement duplicate protection and lookup indexes without deleting existing live data automatically.
+- Phase 8 deterministic announcement scoring is being added so RNS-derived intelligence can be classified, risk-labelled, prioritized, and explained without any AI API calls.
+- A manual scoring script is being added for idempotent server-side updates to `intelligence_items` and controlled `score_history` entries.
 
 ## Next recommended action
 
-1. Apply `supabase/migrations/20260606_fix_rns_deduplication.sql` after the Phase 7 migration.
-2. Run `npm run ingest:rns:mock` twice in a configured environment and confirm the second run only skips duplicates.
-3. Use the duplicate-inspection SQL in `docs/RNS_INGESTION_SPEC.md` before any manual cleanup in shared environments.
+1. Apply `supabase/migrations/20260607_phase8_impact_scoring.sql` after the Phase 7 migrations in the connected Supabase project.
+2. Run `npm run score:rns:impact` twice in a configured environment and confirm the second run skips unchanged scored rows without duplicating `score_history`.
+3. Use the deterministic scoring output to review high-priority, speculative, and avoid-or-reassess RNS evidence before any later alert automation work.
 
 ## Codex starter instruction
 

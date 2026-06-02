@@ -150,6 +150,15 @@ export interface IntelligenceItemRow {
   asset_symbol: string | null;
   headline: string;
   summary: string | null;
+  classification: string | null;
+  impact_direction:
+    | "positive"
+    | "negative"
+    | "neutral"
+    | "mixed"
+    | "unknown"
+    | "speculative"
+    | null;
   item_type:
     | "filing"
     | "result"
@@ -169,6 +178,22 @@ export interface IntelligenceItemRow {
     | "verified"
     | "disputed";
   impact_score: number | null;
+  risk_level:
+    | "low"
+    | "medium"
+    | "high"
+    | "speculative"
+    | "critical"
+    | null;
+  priority:
+    | "high_priority_review"
+    | "watch_today"
+    | "monitor_only"
+    | "speculative_review"
+    | "avoid_or_reassess"
+    | null;
+  scoring_reason: string | null;
+  scored_at: string | null;
   created_at: string;
 }
 
