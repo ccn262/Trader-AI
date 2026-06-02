@@ -23,3 +23,7 @@
 - Added Phase 6 Supabase data-model support for scan runs, intelligence items, evidence, opportunity alerts, and score history in `supabase/migrations/20260604_phase6_opportunity_alerts_data_model.sql`.
 - Added realistic review-only seed records for morning and evening scans, quality and speculative opportunity alerts, sector rotation, and score history.
 - Updated Supabase TypeScript models and rewired `/alerts` to read opportunity alerts through a Supabase-first data layer with mock fallback and empty-table safety.
+- Added `docs/RNS_INGESTION_SPEC.md` describing the RNS/company-announcement ingestion foundation, verification rules, and speculative-resource guardrails.
+- Added Phase 7 Supabase support for `raw_announcements` and intelligence-item links in `supabase/migrations/20260605_phase7_rns_ingestion.sql`.
+- Added a server-side RNS ingestion module and a manual mock ingestion script for development-safe announcement parsing, deduplication, and storage.
+- Added a compact read-only recent-intelligence section on `/alerts` so RNS-derived evidence can be reviewed without creating execution flows.

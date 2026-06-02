@@ -22,12 +22,14 @@ Use this file to keep Codex and future sessions aligned.
 - Phase 5 mock-first Opportunity Alerts UI is being added on `/alerts` with scan cards, filters, and review-only alert cards.
 - Phase 6 opportunity-alerts data model is being added with Supabase tables for scan runs, intelligence sources/items, opportunity alerts/evidence, and score history.
 - `/alerts` now reads from a Supabase-first opportunity-alert feed with mock fallback when env vars are missing and safe empty states when the tables contain no rows.
+- Phase 7 RNS/company-announcement ingestion foundation is being added with raw announcement storage, RNS source seeding, a server-side ingestion module, and a manual mock ingestion script.
+- `/alerts` now has a small read-only recent-intelligence section for RNS-derived evidence, including source confidence, verification status, and impact placeholders.
 
 ## Next recommended action
 
-1. Apply `supabase/migrations/20260604_phase6_opportunity_alerts_data_model.sql` in Supabase.
-2. Verify the seeded opportunity-alert records render as expected on `/alerts`.
-3. Review how future scanners and verification jobs should write into the new scan and intelligence tables.
+1. Apply `supabase/migrations/20260605_phase7_rns_ingestion.sql` in Supabase after the earlier migrations.
+2. Run `npm run ingest:rns:mock` in a configured environment if you want to test manual RNS-style ingestion locally.
+3. Review how future scan runs should consume `raw_announcements` and `intelligence_items` before enabling any scheduled ingestion.
 
 ## Codex starter instruction
 

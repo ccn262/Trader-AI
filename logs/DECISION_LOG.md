@@ -100,3 +100,17 @@ Impact:
 - The app can preserve scan context, evidence lineage, and score-change history.
 - `/alerts` keeps working without Supabase env vars by falling back to mock data.
 - Empty tables no longer break the page and instead render the existing calm empty states.
+
+## 2026-06-02 - RNS ingestion foundation scope
+
+Decision: Add a manual-first RNS/company-announcement ingestion foundation with raw announcement storage, source seeding, server-side parsing/mapping helpers, and a safe mock ingestion script.
+
+Reason: Official UK company announcements are a high-confidence evidence source and need a durable ingestion path before any live feed, AI summarisation, or automated scan scheduling is considered.
+
+Impact:
+
+- RNS items enter the system as evidence, not trade instructions.
+- Raw announcements are stored separately from normalized `intelligence_items`.
+- Deduplication is based on external id, source URL, or headline plus timestamp.
+- Speculative mining/resource and fundraising announcements keep explicit higher-risk framing.
+- No automated scheduler, broker behavior, or AI calls are introduced in this phase.
