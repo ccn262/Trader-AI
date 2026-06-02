@@ -186,3 +186,15 @@ Impact:
 - `opportunity_evidence` now supports primary/evidence flags for clearer auditability.
 - The alert generator should be idempotent and should never create duplicate alerts for the same scored intelligence item.
 - Going-concern, placing, trading-update, director-dealing, and resource-catalyst evidence stays review-only and never turns into buy language.
+
+## 2026-06-02 - Server secret boundary audit
+
+Decision: Add an explicit repository check and documentation for server-secret scan boundaries instead of changing runtime scan behavior.
+
+Reason: Phase 10 needs a durable guardrail so service-role Supabase access and scan orchestration stay out of client bundles without breaking Node scripts that reuse the same server runtime modules.
+
+Impact:
+
+- The repository now documents which modules are server-only boundaries and which env vars must never be exposed client-side.
+- A lightweight check script can fail fast if a `"use client"` file imports server-secret scan or ingestion modules.
+- Runtime scan behavior, cron timing, and public UI flows remain unchanged.

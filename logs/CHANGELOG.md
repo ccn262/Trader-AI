@@ -43,3 +43,5 @@
 - Added Phase 10 scan orchestration with a shared run-scan module, protected manual API trigger, cron endpoints, and Vercel Cron definitions.
 - Added `docs/SCAN_RUN_ORCHESTRATION_SPEC.md` and updated the dashboard and alerts pages to surface latest scan-run summaries and counts.
 - Added `npm run scan:manual`, `npm run scan:morning`, and `npm run scan:evening` for safe local orchestration runs.
+- Added a repository boundary check script to prevent client components from importing server-secret scan and ingestion modules.
+- Documented explicit server-secret boundary rules in `docs/SCAN_RUN_ORCHESTRATION_SPEC.md`.

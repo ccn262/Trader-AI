@@ -159,6 +159,22 @@ This preserves decision context and avoids inventing new history during review.
 - No “buy now” wording
 - No hidden mutation from GET requests except cron routes explicitly protected by secret headers
 
+## Server Secret Boundaries
+
+The scan runtime depends on server-only secrets and must never be pulled into client bundles.
+
+Rules:
+
+- `SUPABASE_SERVICE_ROLE_KEY` may only be read from server-side modules, API routes, route handlers, scripts, or server components.
+- `TRADER_AI_ADMIN_SECRET` and `CRON_SECRET` may only be read by server-side auth helpers, API routes, cron routes, or local admin scripts.
+- Files marked with `"use client"` must not import:
+  - `src/lib/supabase/server.ts`
+  - `src/lib/scanning/run-scan.ts`
+  - `src/lib/scanning/auth.ts`
+  - `src/lib/ingestion/rns.ts`
+- Client components should consume read-only data only through server-rendered props or serialized data from safe data-layer calls.
+- The repository includes a lightweight boundary check script to catch accidental client imports before they reach production.
+
 ## Summary Fields
 
 Each scan run should capture:
@@ -171,4 +187,3 @@ Each scan run should capture:
 - scan status
 - completion flag
 - error message when applicable
-
