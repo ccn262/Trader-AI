@@ -87,3 +87,16 @@ Impact:
 - Alert cards must use “Review opportunity” wording and avoid buy language.
 - Filters and empty states improve scan usability on mobile.
 - Mock data remains the only source for this phase.
+
+## 2026-06-02 - Opportunity alerts data model scope
+
+Decision: Add Phase 6 Supabase tables for scan runs, intelligence sources/items, opportunity alerts/evidence, and score history, and route `/alerts` through a Supabase-first feed with mock fallback.
+
+Reason: The alerts UI now needs a durable schema that can store scan provenance, evidence, and score changes before any live market or AI integrations are added.
+
+Impact:
+
+- Opportunity alerts remain review opportunities, not execution prompts.
+- The app can preserve scan context, evidence lineage, and score-change history.
+- `/alerts` keeps working without Supabase env vars by falling back to mock data.
+- Empty tables no longer break the page and instead render the existing calm empty states.

@@ -41,13 +41,17 @@ export type AlertItem = {
 };
 
 export type OpportunityScan = {
+  id: string;
   label: "Morning Scan" | "Evening Scan";
   title: string;
   summary: string;
   bullets: string[];
+  status: "Completed" | "Running" | "Pending" | "Failed";
+  marketHealthScore: number;
 };
 
 export type OpportunityAlert = {
+  id: string;
   symbol: string;
   name: string;
   market: "LSE" | "NYSE" | "NASDAQ" | "AIM";
@@ -61,7 +65,14 @@ export type OpportunityAlert = {
     | "ETF/sector rotation";
   catalystSummary: string;
   score: number;
+  priority:
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Speculative review";
   sourceConfidence: string;
+  sourceConfidenceScore: number;
+  riskLevel: "Low" | "Medium" | "High" | "Speculative";
   suggestedPositionRange: string;
   suggestedHoldTimeframe: string;
   exitPlan: string;
@@ -292,6 +303,7 @@ export const alerts: AlertItem[] = [
 
 export const opportunityScans: OpportunityScan[] = [
   {
+    id: "scan-morning-20260602",
     label: "Morning Scan",
     title: "What changed overnight",
     summary:
@@ -301,8 +313,11 @@ export const opportunityScans: OpportunityScan[] = [
       "New opportunities and filings",
       "High-priority reviews for today",
     ],
+    status: "Completed",
+    marketHealthScore: 68,
   },
   {
+    id: "scan-evening-20260602",
     label: "Evening Scan",
     title: "What deserves follow-up",
     summary:
@@ -312,11 +327,14 @@ export const opportunityScans: OpportunityScan[] = [
       "Watchlist score changes",
       "Tomorrow’s opportunity candidates",
     ],
+    status: "Completed",
+    marketHealthScore: 61,
   },
 ] as const;
 
 export const opportunityAlerts: OpportunityAlert[] = [
   {
+    id: "opp-vwrp-20260602-morning",
     symbol: "VWRP",
     name: "Vanguard FTSE All-World UCITS ETF",
     market: "LSE",
@@ -324,7 +342,10 @@ export const opportunityAlerts: OpportunityAlert[] = [
     catalystSummary:
       "Broad global exposure remains aligned with the core long-term allocation plan.",
     score: 84,
+    priority: "High-priority review",
     sourceConfidence: "High",
+    sourceConfidenceScore: 92,
+    riskLevel: "Low",
     suggestedPositionRange: "£10-£20",
     suggestedHoldTimeframe: "Weeks to months",
     exitPlan: "Reassess if allocation drifts or the thesis changes materially.",
@@ -339,6 +360,7 @@ export const opportunityAlerts: OpportunityAlert[] = [
     scan: "Morning",
   },
   {
+    id: "opp-msft-20260602-morning",
     symbol: "MSFT",
     name: "Microsoft Corporation",
     market: "NASDAQ",
@@ -346,7 +368,10 @@ export const opportunityAlerts: OpportunityAlert[] = [
     catalystSummary:
       "Earnings and guidance context may justify a fresh review of the current setup.",
     score: 79,
+    priority: "High-priority review",
     sourceConfidence: "Medium-high",
+    sourceConfidenceScore: 88,
+    riskLevel: "Medium",
     suggestedPositionRange: "£5-£15",
     suggestedHoldTimeframe: "Days to weeks",
     exitPlan: "Reassess after earnings follow-through or if momentum fades.",
@@ -361,6 +386,7 @@ export const opportunityAlerts: OpportunityAlert[] = [
     scan: "Morning",
   },
   {
+    id: "opp-nvda-20260602-evening",
     symbol: "NVDA",
     name: "NVIDIA Corporation",
     market: "NASDAQ",
@@ -368,7 +394,10 @@ export const opportunityAlerts: OpportunityAlert[] = [
     catalystSummary:
       "High momentum and active sector attention create a review-worthy setup.",
     score: 74,
+    priority: "Watch today",
     sourceConfidence: "Medium",
+    sourceConfidenceScore: 76,
+    riskLevel: "High",
     suggestedPositionRange: "£5-£10",
     suggestedHoldTimeframe: "Days to weeks",
     exitPlan: "Reassess if volume weakens or the trend structure breaks.",
@@ -383,6 +412,7 @@ export const opportunityAlerts: OpportunityAlert[] = [
     scan: "Evening",
   },
   {
+    id: "opp-rrl-20260602-evening",
     symbol: "RR.L",
     name: "Rolls-Royce Holdings plc",
     market: "LSE",
@@ -390,7 +420,10 @@ export const opportunityAlerts: OpportunityAlert[] = [
     catalystSummary:
       "Event-driven interest warrants a structured review rather than a rushed decision.",
     score: 67,
+    priority: "Monitor only",
     sourceConfidence: "Medium",
+    sourceConfidenceScore: 72,
+    riskLevel: "Medium",
     suggestedPositionRange: "£5-£10",
     suggestedHoldTimeframe: "Event window",
     exitPlan: "Reassess after the catalyst or if the event thesis loses support.",
@@ -405,6 +438,59 @@ export const opportunityAlerts: OpportunityAlert[] = [
     scan: "Evening",
   },
   {
+    id: "opp-solg-20260602-morning",
+    symbol: "SOLG",
+    name: "SolGold plc",
+    market: "AIM",
+    opportunityType: "Mining/resource catalyst",
+    catalystSummary:
+      "Fresh drilling commentary and financing context create a speculative review candidate, not an execution prompt.",
+    score: 49,
+    priority: "Speculative review",
+    sourceConfidence: "Low-medium",
+    sourceConfidenceScore: 44,
+    riskLevel: "Speculative",
+    suggestedPositionRange: "£1-£3",
+    suggestedHoldTimeframe: "Catalyst window only",
+    exitPlan: "Reassess if follow-up RNS detail is weak or funding risk rises.",
+    riskWarning:
+      "Thin liquidity, financing risk, and headline volatility make this unsuitable for oversized positions.",
+    evidencePlaceholders: [
+      "RNS drill result placeholder",
+      "Commodity trend placeholder",
+      "Funding risk placeholder",
+    ],
+    filterTags: ["Penny shares"],
+    scan: "Morning",
+  },
+  {
+    id: "opp-xlk-20260602-evening",
+    symbol: "XLK",
+    name: "Technology Select Sector SPDR Fund",
+    market: "NYSE",
+    opportunityType: "ETF/sector rotation",
+    catalystSummary:
+      "Relative strength versus the broader market suggests a sector rotation idea worth monitoring.",
+    score: 71,
+    priority: "Monitor only",
+    sourceConfidence: "Medium-high",
+    sourceConfidenceScore: 81,
+    riskLevel: "Low",
+    suggestedPositionRange: "£5-£12",
+    suggestedHoldTimeframe: "Weeks to months",
+    exitPlan: "Reassess if leadership fades or macro conditions rotate away from growth.",
+    riskWarning:
+      "Sector leadership can reverse quickly if macro risk appetite weakens.",
+    evidencePlaceholders: [
+      "Relative strength placeholder",
+      "ETF flow placeholder",
+      "Sector breadth placeholder",
+    ],
+    filterTags: ["Monitor only", "Long-term"],
+    scan: "Evening",
+  },
+  {
+    id: "opp-pltr-20260602-morning",
     symbol: "PLTR",
     name: "Palantir Technologies Inc.",
     market: "NYSE",
@@ -412,7 +498,10 @@ export const opportunityAlerts: OpportunityAlert[] = [
     catalystSummary:
       "Narrative-driven interest is present, but evidence quality must remain tight.",
     score: 46,
+    priority: "Speculative review",
     sourceConfidence: "Low-medium",
+    sourceConfidenceScore: 42,
+    riskLevel: "Speculative",
     suggestedPositionRange: "£1-£5",
     suggestedHoldTimeframe: "Short review cycle",
     exitPlan: "Reassess quickly if the catalyst does not earn confirmation.",

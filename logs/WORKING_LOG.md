@@ -20,12 +20,14 @@ Use this file to keep Codex and future sessions aligned.
 - `docs/TRADER_AI_CONSTITUTION.md` now serves as the master authority for future work.
 - Phase 4 planning docs are being added for intelligence, opportunity, risk, data source, scanner, and daily briefing architecture.
 - Phase 5 mock-first Opportunity Alerts UI is being added on `/alerts` with scan cards, filters, and review-only alert cards.
+- Phase 6 opportunity-alerts data model is being added with Supabase tables for scan runs, intelligence sources/items, opportunity alerts/evidence, and score history.
+- `/alerts` now reads from a Supabase-first opportunity-alert feed with mock fallback when env vars are missing and safe empty states when the tables contain no rows.
 
 ## Next recommended action
 
-1. Verify the Opportunity Alerts UI in the browser and confirm the mobile layout behaves correctly.
-2. Review the Phase 4 planning docs and confirm the architecture direction before implementation.
-3. Provision Supabase and run the migrations if they have not already been applied.
+1. Apply `supabase/migrations/20260604_phase6_opportunity_alerts_data_model.sql` in Supabase.
+2. Verify the seeded opportunity-alert records render as expected on `/alerts`.
+3. Review how future scanners and verification jobs should write into the new scan and intelligence tables.
 
 ## Codex starter instruction
 

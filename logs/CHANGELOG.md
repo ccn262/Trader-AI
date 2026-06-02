@@ -20,3 +20,6 @@
 - Added Phase 4 planning docs for intelligence, opportunity, risk, data source, scanner, and daily briefing architecture.
 - Updated the README and Codex brief to point future work at the constitution first.
 - Added Phase 5 mock-first Opportunity Alerts UI on the alerts route with morning/evening scan cards, filters, empty states, and review-only alert cards.
+- Added Phase 6 Supabase data-model support for scan runs, intelligence items, evidence, opportunity alerts, and score history in `supabase/migrations/20260604_phase6_opportunity_alerts_data_model.sql`.
+- Added realistic review-only seed records for morning and evening scans, quality and speculative opportunity alerts, sector rotation, and score history.
+- Updated Supabase TypeScript models and rewired `/alerts` to read opportunity alerts through a Supabase-first data layer with mock fallback and empty-table safety.
