@@ -1,4 +1,9 @@
+import { resolve } from "node:path"
+
 import { createClient } from "@supabase/supabase-js"
+import dotenv from "dotenv"
+
+dotenv.config({ path: resolve(process.cwd(), ".env.local") })
 
 const sourceId = "3dbfbf7f-ae35-48a4-a9fd-3d1de09a6fd9"
 const scanRunId = "1b7f5fb7-8e69-4ccd-a8e7-9d0242052601"
@@ -10,12 +15,24 @@ const url =
 
 const key =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
-  process.env.SUPABASE_ANON_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  null
 
 if (!url || !key) {
+  const missing = []
+
+  if (!url) {
+    missing.push("SUPABASE_URL")
+  }
+
+  if (!key) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY")
+  }
+
+  console.error("Missing required Supabase environment variables for mock RNS ingestion.")
+  console.error(`Checked project root .env.local at ${resolve(process.cwd(), ".env.local")}.`)
+  console.error(`Still missing: ${missing.join(", ")}.`)
   console.error(
-    "Missing Supabase environment variables. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running mock ingestion.",
+    "Add the missing values to .env.local or export them in the shell before running `npm run ingest:rns:mock`.",
   )
   process.exit(1)
 }
