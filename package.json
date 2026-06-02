@@ -8,9 +8,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
-    "ingest:rns:mock": "node scripts/ingest-rns-mock.mjs",
+    "ingest:rns:mock": "node --import tsx scripts/ingest-rns-mock.mjs",
     "score:rns:impact": "node --import tsx scripts/score-rns-impact.mjs",
-    "generate:opportunity-alerts": "node --import tsx scripts/generate-opportunity-alerts.mjs"
+    "generate:opportunity-alerts": "node --import tsx scripts/generate-opportunity-alerts.mjs",
+    "scan:manual": "node --import tsx scripts/run-scan.mjs manual",
+    "scan:morning": "node --import tsx scripts/run-scan.mjs morning",
+    "scan:evening": "node --import tsx scripts/run-scan.mjs evening"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

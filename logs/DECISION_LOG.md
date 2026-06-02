@@ -119,6 +119,27 @@ Impact:
 
 Decision: Tighten RNS ingestion deduplication so both the manual mock script and the server-side ingestion helper reuse existing rows by `external_id`, `source_url`, or `asset_symbol + headline + published_at`.
 
+Reason: Re-running mock ingestion must remain safe and must not create duplicate raw announcements or duplicate intelligence rows.
+
+Impact:
+
+- Raw announcement writes are idempotent.
+- Intelligence-item writes are idempotent.
+- Duplicate-looking RNS rows can be repaired without deleting live data.
+
+## 2026-06-02 - Scan orchestration boundary
+
+Decision: Add a shared scan-run orchestration layer with protected manual and cron entry points that reuses existing ingestion, scoring, and alert-generation logic.
+
+Reason: Morning and evening review loops need a single safe path that can later be called by Vercel Cron without adding broker execution, live APIs, or AI calls.
+
+Impact:
+
+- `runScan` coordinates ingestion, scoring, alerts, and scan-run summary writes.
+- Manual scans require `TRADER_AI_ADMIN_SECRET`.
+- Cron scans require `CRON_SECRET` or `TRADER_AI_ADMIN_SECRET`.
+- The dashboard and alerts pages can show latest scan summaries without exposing secrets or execution flows.
+
 Reason: Re-running mock ingestion in a seeded environment can create duplicate-looking evidence if deduplication relies on only one identifier or assumes a single matching row already exists.
 
 Impact:

@@ -32,12 +32,16 @@ Use this file to keep Codex and future sessions aligned.
 - The scoring script now exits nonzero if negative-score rows still hit an old database constraint, which makes the migration dependency obvious during verification.
 - Phase 9 opportunity-generation logic is being added so scored intelligence can become review-only alerts with supporting evidence and explicit provenance.
 - A manual alert-generation script is being added for idempotent creation of `opportunity_alerts` and `opportunity_evidence` rows.
+- Phase 10 scan orchestration is being added with a shared `runScan` module, protected manual trigger route, cron routes, and local scan scripts.
+- Dashboard and alerts views are being updated to show the latest morning/evening scan summaries, counts, and completion state.
+- `TRADER_AI_ADMIN_SECRET` and `CRON_SECRET` are now part of the server-only environment boundary for scan triggers.
 
 ## Next recommended action
 
 1. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project.
 2. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
-3. Use the deterministic scoring and alert-generation output to review high-priority, speculative, and avoid-or-reassess evidence before any later automation work.
+3. Apply `supabase/migrations/20260610_phase10_scan_orchestration.sql`, then run `npm run scan:manual` twice and verify the second pass does not duplicate raw announcements or review alerts.
+4. Use the deterministic scoring, alert-generation, and scan summary output to review high-priority, speculative, and avoid-or-reassess evidence before any later automation work.
 
 ## Codex starter instruction
 

@@ -119,6 +119,15 @@ export interface ScanRunRow {
   summary: string | null;
   market_health_score: number | null;
   notes: string | null;
+  trigger_source: "manual" | "cron" | "dev_script";
+  started_by: string | null;
+  total_intelligence_items: number;
+  total_alerts_generated: number;
+  high_priority_count: number;
+  speculative_count: number;
+  avoid_or_reassess_count: number;
+  error_message: string | null;
+  completed_successfully: boolean;
   created_at: string;
 }
 

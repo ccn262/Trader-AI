@@ -40,3 +40,6 @@
 - Added `supabase/migrations/20260609_phase9_alert_generation.sql` for alert provenance fields, evidence flags, and idempotent generation indexes.
 - Added a deterministic opportunity-alert generation module and `npm run generate:opportunity-alerts` for review-only alert creation from scored intelligence items.
 - Updated the alerts page and mock fallback data so generated alerts can show generation reason, review-by date, and source/evidence links.
+- Added Phase 10 scan orchestration with a shared run-scan module, protected manual API trigger, cron endpoints, and Vercel Cron definitions.
+- Added `docs/SCAN_RUN_ORCHESTRATION_SPEC.md` and updated the dashboard and alerts pages to surface latest scan-run summaries and counts.
+- Added `npm run scan:manual`, `npm run scan:morning`, and `npm run scan:evening` for safe local orchestration runs.

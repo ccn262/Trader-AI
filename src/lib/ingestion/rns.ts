@@ -1,5 +1,3 @@
-import "server-only";
-
 import { getSupabaseClient, hasSupabaseConfig } from "@/lib/supabase/server";
 import type {
   IntelligenceItemRow,
