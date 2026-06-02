@@ -231,3 +231,5 @@ Rules:
 - Use the registry to document why a source is rejected, not just whether it worked once.
 
 The registry definition lives in [docs/SOURCE_CANDIDATE_REGISTRY.md](./SOURCE_CANDIDATE_REGISTRY.md).
+
+Evaluation history should live in a separate diagnostics table so validation can be reviewed over time without overwriting the registry's current status. See [docs/SOURCE_EVALUATION_WORKFLOW.md](./SOURCE_EVALUATION_WORKFLOW.md).

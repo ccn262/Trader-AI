@@ -43,6 +43,7 @@ Use this file to keep Codex and future sessions aligned.
 - The real validation path should only persist validated external evidence URLs and report validation counters explicitly.
 - A diagnostic-only source inspection script is being added so the raw page title, anchor count, href sample, and JS-rendered hint can be reviewed without writing to Supabase.
 - A source candidate registry is being added so candidate, validating, validated, rejected, paid-required, and manual-only sources can be reviewed in one place on `/sources`.
+- A source evaluation workflow is being added so diagnostics can be stored, reviewed, and shown on `/sources/[id]` without enabling ingestion or cron.
 
 ## Next recommended action
 

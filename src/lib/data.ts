@@ -29,6 +29,7 @@ import type {
   ScanRunRow,
   ScoreHistoryRow,
   SourceCandidateRow,
+  SourceDiagnosticRow,
   TradeJournalRow,
   WatchlistRow,
 } from "./supabase/types";
@@ -47,6 +48,7 @@ import {
   quickActions,
   recentIntelligenceItems as mockRecentIntelligenceItems,
   summaryCards,
+  sourceDiagnostics as mockSourceDiagnostics,
   sourceCandidates as mockSourceCandidates,
   watchlists as mockWatchlists,
 } from "./mock-data";
@@ -219,7 +221,31 @@ export type SourceCandidateViewModel = {
   diagnosticStatus: string;
   diagnosticSummary: string;
   lastCheckedAt: string;
+  validationOwner: string;
+  validationNotes: string;
+  lastDiagnosticId: string | null;
+  validatedAt: string;
+  rejectedAt: string;
   notes: string;
+};
+
+export type SourceDiagnosticViewModel = {
+  id: string;
+  sourceCandidateId: string;
+  checkedUrl: string;
+  httpStatus: number;
+  contentType: string;
+  responseLength: number;
+  pageTitle: string;
+  anchorCount: number;
+  likelyRnsHrefCount: number;
+  appearsJavaScriptRendered: boolean;
+  validExternalUrlsCount: number;
+  rejectedUrlsCount: number;
+  diagnosticSummary: string;
+  recommendation: string;
+  rawSample: Record<string, unknown> | null;
+  createdAt: string;
 };
 
 export type RawAnnouncementViewModel = {
@@ -574,7 +600,80 @@ function mapSourceCandidateRow(
         "lastCheckedAt" in row ? row.lastCheckedAt : row.last_checked_at;
       return value ? formatScanTimestamp(value) : "Never checked";
     })(),
+    validationOwner:
+      ("validationOwner" in row ? row.validationOwner : row.validation_owner) ??
+      "Unassigned",
+    validationNotes:
+      ("validationNotes" in row ? row.validationNotes : row.validation_notes) ??
+      "",
+    lastDiagnosticId:
+      ("lastDiagnosticId" in row ? row.lastDiagnosticId : row.last_diagnostic_id) ??
+      null,
+    validatedAt: (() => {
+      const value =
+        "validatedAt" in row ? row.validatedAt : row.validated_at;
+      return value ? formatScanTimestamp(value) : "Not validated";
+    })(),
+    rejectedAt: (() => {
+      const value =
+        "rejectedAt" in row ? row.rejectedAt : row.rejected_at;
+      return value ? formatScanTimestamp(value) : "Not rejected";
+    })(),
     notes: row.notes ?? "",
+  };
+}
+
+function getMockSourceDiagnostics() {
+  return [...mockSourceDiagnostics]
+    .sort(
+      (left, right) =>
+        new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+    )
+    .map((row) => mapSourceDiagnosticRow(row))
+    .filter((row): row is SourceDiagnosticViewModel => row !== null);
+}
+
+function mapSourceDiagnosticRow(
+  row: SourceDiagnosticRow | (typeof mockSourceDiagnostics)[number] | null,
+): SourceDiagnosticViewModel | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    sourceCandidateId:
+      "sourceCandidateId" in row ? row.sourceCandidateId : row.source_candidate_id,
+    checkedUrl: "checkedUrl" in row ? row.checkedUrl : row.checked_url,
+    httpStatus: "httpStatus" in row ? row.httpStatus : row.http_status,
+    contentType: "contentType" in row ? row.contentType : row.content_type,
+    responseLength:
+      "responseLength" in row ? row.responseLength : row.response_length,
+    pageTitle: "pageTitle" in row ? row.pageTitle ?? "" : row.page_title ?? "",
+    anchorCount: "anchorCount" in row ? row.anchorCount : row.anchor_count,
+    likelyRnsHrefCount:
+      "likelyRnsHrefCount" in row
+        ? row.likelyRnsHrefCount
+        : row.likely_rns_href_count,
+    appearsJavaScriptRendered:
+      "appearsJavascriptRendered" in row
+        ? row.appearsJavascriptRendered
+        : row.appears_javascript_rendered,
+    validExternalUrlsCount:
+      "validExternalUrlsCount" in row
+        ? row.validExternalUrlsCount
+        : row.valid_external_urls_count,
+    rejectedUrlsCount:
+      "rejectedUrlsCount" in row ? row.rejectedUrlsCount : row.rejected_urls_count,
+    diagnosticSummary:
+      "diagnosticSummary" in row
+        ? row.diagnosticSummary
+        : row.diagnostic_summary,
+    recommendation: row.recommendation,
+    rawSample: "rawSample" in row ? row.rawSample : row.raw_sample,
+    createdAt: formatScanTimestamp(
+      "createdAt" in row ? row.createdAt : row.created_at,
+    ),
   };
 }
 
@@ -1979,6 +2078,94 @@ export async function getSourceCandidates(): Promise<SourceCandidateViewModel[]>
   return (data as SourceCandidateRow[])
     .map((row) => mapSourceCandidateRow(row))
     .filter((row): row is SourceCandidateViewModel => row !== null);
+}
+
+export async function getSourceCandidateById(
+  id: string,
+): Promise<SourceCandidateViewModel | null> {
+  if (!hasSupabaseConfig()) {
+    return (
+      getMockSourceCandidates().find((candidate) => candidate.id === id) ?? null
+    );
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return (
+      getMockSourceCandidates().find((candidate) => candidate.id === id) ?? null
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("source_candidates")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error || !data) {
+    return (
+      getMockSourceCandidates().find((candidate) => candidate.id === id) ?? null
+    );
+  }
+
+  return mapSourceCandidateRow(data as SourceCandidateRow);
+}
+
+export async function getSourceDiagnosticsForCandidate(
+  candidateId: string,
+): Promise<SourceDiagnosticViewModel[]> {
+  if (!hasSupabaseConfig()) {
+    return getMockSourceDiagnostics().filter(
+      (diagnostic) => diagnostic.sourceCandidateId === candidateId,
+    );
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return getMockSourceDiagnostics().filter(
+      (diagnostic) => diagnostic.sourceCandidateId === candidateId,
+    );
+  }
+
+  const { data, error } = await supabase
+    .from("source_diagnostics")
+    .select("*")
+    .eq("source_candidate_id", candidateId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return getMockSourceDiagnostics().filter(
+      (diagnostic) => diagnostic.sourceCandidateId === candidateId,
+    );
+  }
+
+  return (data as SourceDiagnosticRow[])
+    .map((row) => mapSourceDiagnosticRow(row))
+    .filter((row): row is SourceDiagnosticViewModel => row !== null);
+}
+
+export async function getLatestSourceDiagnostics(): Promise<SourceDiagnosticViewModel[]> {
+  if (!hasSupabaseConfig()) {
+    return getMockSourceDiagnostics();
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return getMockSourceDiagnostics();
+  }
+
+  const { data, error } = await supabase
+    .from("source_diagnostics")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) {
+    return getMockSourceDiagnostics();
+  }
+
+  return (data as SourceDiagnosticRow[])
+    .map((row) => mapSourceDiagnosticRow(row))
+    .filter((row): row is SourceDiagnosticViewModel => row !== null);
 }
 
 export async function getAssets(): Promise<AssetViewModel[]> {

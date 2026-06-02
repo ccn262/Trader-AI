@@ -262,3 +262,16 @@ Impact:
 - LSE `/news` remains tracked as JS-rendered and rejected for simple parsing.
 - Manual-only and paid-required candidates stay clearly separated from validated sources.
 - The registry is governance-only and does not enable live ingestion or cron changes.
+
+## 2026-06-02 - Source evaluation workflow
+
+Decision: Add a source evaluation workflow that stores diagnostics separately from registry rows and exposes candidate detail pages for review.
+
+Reason: Candidate status alone is not enough; the team needs diagnostic history so it can understand why a source was rejected, manual-only, or validated before wiring it into ingestion.
+
+Impact:
+
+- Diagnostic runs can be stored without changing candidate status automatically.
+- `/sources/[id]` provides a review page with the latest diagnostic and a timeline.
+- The diagnostic script can optionally persist a read-only review record when explicitly configured.
+- Real-source ingestion still stays manual-first and gated by validation rules.
