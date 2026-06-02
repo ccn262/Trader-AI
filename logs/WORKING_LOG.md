@@ -30,12 +30,14 @@ Use this file to keep Codex and future sessions aligned.
 - A manual scoring script is being added for idempotent server-side updates to `intelligence_items` and controlled `score_history` entries.
 - A follow-up constraint fix is being added so adverse announcements can store negative impact scores and negative score-history values cleanly.
 - The scoring script now exits nonzero if negative-score rows still hit an old database constraint, which makes the migration dependency obvious during verification.
+- Phase 9 opportunity-generation logic is being added so scored intelligence can become review-only alerts with supporting evidence and explicit provenance.
+- A manual alert-generation script is being added for idempotent creation of `opportunity_alerts` and `opportunity_evidence` rows.
 
 ## Next recommended action
 
-1. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` after the Phase 8 migration in the connected Supabase project.
-2. Run `npm run score:rns:impact` twice in a configured environment and confirm the second run skips unchanged scored rows without duplicating `score_history`.
-3. Use the deterministic scoring output to review high-priority, speculative, and avoid-or-reassess RNS evidence before any later alert automation work.
+1. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project.
+2. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
+3. Use the deterministic scoring and alert-generation output to review high-priority, speculative, and avoid-or-reassess evidence before any later automation work.
 
 ## Codex starter instruction
 

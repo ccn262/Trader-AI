@@ -124,6 +124,7 @@ export type OpportunityScanViewModel = {
 
 export type OpportunityAlertViewModel = {
   id: string;
+  sourceIntelligenceItemId: string | null;
   symbol: string;
   name: string;
   market: "LSE" | "NYSE" | "NASDAQ" | "AIM";
@@ -141,17 +142,32 @@ export type OpportunityAlertViewModel = {
     | "High-priority review"
     | "Watch today"
     | "Monitor only"
-    | "Speculative review";
+    | "Speculative review"
+    | "Avoid or reassess";
   sourceConfidence: string;
   sourceConfidenceScore: number;
-  riskLevel: "Low" | "Medium" | "High" | "Speculative";
+  riskLevel: "Low" | "Medium" | "High" | "Speculative" | "Critical";
   suggestedPositionRange: string;
   suggestedHoldTimeframe: string;
   exitPlan: string;
   riskWarning: string;
+  generatedBy: string;
+  generationReason: string;
+  invalidationNotes: string;
+  reviewBy: string;
+  confidenceLabel: string;
+  evidenceItems: OpportunityAlertEvidenceViewModel[];
   evidencePlaceholders: string[];
   filterTags: OpportunityAlertFilterTag[];
   scan: "Morning" | "Evening";
+};
+
+export type OpportunityAlertEvidenceViewModel = {
+  label: string;
+  summary: string;
+  sourceUrl: string | null;
+  evidenceType: string | null;
+  isPrimary: boolean;
 };
 
 export type OpportunityAlertFeed = {
@@ -297,6 +313,8 @@ function formatOpportunityPriority(
       return "Monitor only";
     case "speculative_review":
       return "Speculative review";
+    case "avoid_or_reassess":
+      return "Avoid or reassess";
   }
 
   return "Monitor only";
@@ -305,6 +323,7 @@ function formatOpportunityPriority(
 function formatRiskLevel(value: string | null | undefined) {
   if (!value) return "Medium" as const;
   const normalized = value.toLowerCase();
+  if (normalized.includes("critical")) return "Critical" as const;
   if (normalized.includes("spec")) return "Speculative" as const;
   if (normalized.includes("high")) return "High" as const;
   if (normalized.includes("low")) return "Low" as const;
@@ -347,6 +366,7 @@ function getOpportunityFilterTags(
   const tags = new Set<OpportunityAlertFilterTag>();
 
   if (priority === "High-priority review") tags.add("High-priority review");
+  if (priority === "Avoid or reassess") tags.add("High-priority review");
   if (priority === "Watch today") tags.add("Watch today");
   if (priority === "Monitor only") tags.add("Monitor only");
   if (priority === "Speculative review") tags.add("Penny shares");
@@ -644,14 +664,53 @@ function mapScanRunRow(
 function mapOpportunityAlertRow(
   row: OpportunityAlertRow,
   evidenceRows: OpportunityEvidenceRow[],
+  intelligenceRows: IntelligenceItemRow[],
   scanRuns: ScanRunRow[],
 ): OpportunityAlertViewModel {
   const priority = formatOpportunityPriority(row.priority);
   const opportunityType = formatOpportunityType(row.opportunity_type);
   const scanRun = scanRuns.find((scan) => scan.id === row.scan_run_id);
+  const sourceIntelligenceItem = row.source_intelligence_item_id
+    ? intelligenceRows.find((item) => item.id === row.source_intelligence_item_id)
+    : undefined;
+  const orderedEvidenceRows = [...evidenceRows].sort((left, right) => {
+    if (left.is_primary !== right.is_primary) {
+      return left.is_primary ? -1 : 1;
+    }
+
+    return new Date(left.created_at).getTime() - new Date(right.created_at).getTime();
+  });
+  const evidenceItems =
+    orderedEvidenceRows.length > 0
+      ? orderedEvidenceRows.map((item) => ({
+          label: item.evidence_label,
+          summary: item.evidence_summary ?? "",
+          sourceUrl:
+            item.source_url ??
+            (item.intelligence_item_id
+              ? intelligenceRows.find((row) => row.id === item.intelligence_item_id)
+                  ?.source_url ?? null
+              : null),
+          evidenceType: item.evidence_type,
+          isPrimary: item.is_primary,
+        }))
+      : sourceIntelligenceItem
+        ? [
+            {
+              label: "Primary scored intelligence",
+              summary: sourceIntelligenceItem.summary ?? sourceIntelligenceItem.headline,
+              sourceUrl: sourceIntelligenceItem.source_url,
+              evidenceType: "scored_intelligence",
+              isPrimary: true,
+            },
+          ]
+        : [];
+  const primaryEvidence =
+    evidenceItems.find((item) => item.isPrimary) ?? evidenceItems[0] ?? null;
 
   return {
     id: row.id,
+    sourceIntelligenceItemId: row.source_intelligence_item_id,
     symbol: row.asset_symbol,
     name: row.asset_name,
     market: formatMarket(row.market),
@@ -672,13 +731,20 @@ function mapOpportunityAlertRow(
     riskWarning:
       row.risk_warning ??
       "Risk context is incomplete. Review the evidence before any manual action.",
+    generatedBy: row.generated_by,
+    generationReason:
+      row.generation_reason ??
+      "Deterministic rules generated this review-only opportunity.",
+    invalidationNotes:
+      row.invalidation_notes ??
+      "Reassess if new evidence changes the original thesis.",
+    reviewBy: row.review_by ? formatReviewDate(row.review_by) : "Review manually",
+    confidenceLabel:
+      row.confidence_label ?? formatConfidenceLabel(row.source_confidence),
+    evidenceItems,
     evidencePlaceholders:
-      evidenceRows.length > 0
-        ? evidenceRows.map((item) =>
-            item.evidence_summary
-              ? `${item.evidence_label}: ${item.evidence_summary}`
-              : item.evidence_label,
-          )
+      primaryEvidence && primaryEvidence.summary
+        ? [primaryEvidence.summary]
         : ["Evidence pending verification"],
     filterTags: getOpportunityFilterTags(priority, opportunityType),
     scan: scanRun?.scan_type === "evening" ? "Evening" : "Morning",
@@ -1418,6 +1484,7 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
       mapOpportunityAlertRow(
         row,
         evidenceRows.filter((item) => item.opportunity_alert_id === row.id),
+        intelligenceRows,
         scanRows,
       ),
     );

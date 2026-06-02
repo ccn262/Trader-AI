@@ -9,7 +9,8 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "ingest:rns:mock": "node scripts/ingest-rns-mock.mjs",
-    "score:rns:impact": "node --import tsx scripts/score-rns-impact.mjs"
+    "score:rns:impact": "node --import tsx scripts/score-rns-impact.mjs",
+    "generate:opportunity-alerts": "node --import tsx scripts/generate-opportunity-alerts.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",

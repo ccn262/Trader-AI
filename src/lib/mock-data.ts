@@ -52,6 +52,7 @@ export type OpportunityScan = {
 
 export type OpportunityAlert = {
   id: string;
+  sourceIntelligenceItemId: string | null;
   symbol: string;
   name: string;
   market: "LSE" | "NYSE" | "NASDAQ" | "AIM";
@@ -69,14 +70,21 @@ export type OpportunityAlert = {
     | "High-priority review"
     | "Watch today"
     | "Monitor only"
-    | "Speculative review";
+    | "Speculative review"
+    | "Avoid or reassess";
   sourceConfidence: string;
   sourceConfidenceScore: number;
-  riskLevel: "Low" | "Medium" | "High" | "Speculative";
+  riskLevel: "Low" | "Medium" | "High" | "Speculative" | "Critical";
   suggestedPositionRange: string;
   suggestedHoldTimeframe: string;
   exitPlan: string;
   riskWarning: string;
+  generatedBy: string;
+  generationReason: string;
+  invalidationNotes: string;
+  reviewBy: string;
+  confidenceLabel: string;
+  evidenceItems: OpportunityAlertEvidence[];
   evidencePlaceholders: string[];
   filterTags: Array<
     | "High-priority review"
@@ -87,6 +95,14 @@ export type OpportunityAlert = {
     | "Swing trades"
   >;
   scan: "Morning" | "Evening";
+};
+
+export type OpportunityAlertEvidence = {
+  label: string;
+  summary: string;
+  sourceUrl: string | null;
+  evidenceType: string | null;
+  isPrimary: boolean;
 };
 
 export type RecentIntelligenceItem = {
@@ -365,137 +381,272 @@ export const opportunityScans: OpportunityScan[] = [
 
 export const opportunityAlerts: OpportunityAlert[] = [
   {
-    id: "opp-vwrp-20260602-morning",
-    symbol: "VWRP",
-    name: "Vanguard FTSE All-World UCITS ETF",
+    id: "opp-rr-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-final-results-rr",
+    symbol: "RR.L",
+    name: "Rolls-Royce Holdings plc",
     market: "LSE",
-    opportunityType: "Long-term investment",
-    catalystSummary:
-      "Broad global exposure remains aligned with the core long-term allocation plan.",
-    score: 84,
-    priority: "High-priority review",
-    sourceConfidence: "High",
-    sourceConfidenceScore: 92,
-    riskLevel: "Low",
-    suggestedPositionRange: "£10-£20",
-    suggestedHoldTimeframe: "Weeks to months",
-    exitPlan: "Reassess if allocation drifts or the thesis changes materially.",
-    riskWarning:
-      "Market risk remains present even when the thesis is simple.",
-    evidencePlaceholders: [
-      "ETF composition placeholder",
-      "Market breadth placeholder",
-      "Allocation review placeholder",
-    ],
-    filterTags: ["High-priority review", "Long-term"],
-    scan: "Morning",
-  },
-  {
-    id: "opp-msft-20260602-morning",
-    symbol: "MSFT",
-    name: "Microsoft Corporation",
-    market: "NASDAQ",
     opportunityType: "Earnings momentum",
     catalystSummary:
-      "Earnings and guidance context may justify a fresh review of the current setup.",
-    score: 79,
-    priority: "High-priority review",
-    sourceConfidence: "Medium-high",
-    sourceConfidenceScore: 88,
+      "Final results show improving cash generation and order visibility, so this is a review-only momentum candidate.",
+    score: 82,
+    priority: "Watch today",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
     riskLevel: "Medium",
-    suggestedPositionRange: "£5-£15",
-    suggestedHoldTimeframe: "Days to weeks",
-    exitPlan: "Reassess after earnings follow-through or if momentum fades.",
+    suggestedPositionRange: "£5-£10",
+    suggestedHoldTimeframe: "1 to 10 trading days",
+    exitPlan: "Reassess if the post-results follow-through fades or guidance changes.",
     riskWarning:
-      "Post-earnings moves can reverse quickly if the market disagrees.",
+      "Post-announcement moves can reverse quickly.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the final results score into a review-only earnings momentum alert.",
+    invalidationNotes:
+      "Reassess if the final-results thesis no longer appears supported by follow-through.",
+    reviewBy: "2026-06-03",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Official final results with improved cash generation and order visibility.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/RR./final-results/mock-001",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
+    ],
     evidencePlaceholders: [
-      "Earnings transcript placeholder",
-      "Guidance revision placeholder",
-      "Relative strength placeholder",
+      "Primary scored intelligence",
+      "Final results evidence",
+      "Review-only catalyst",
     ],
     filterTags: ["High-priority review", "Watch today", "Swing trades"],
     scan: "Morning",
   },
   {
-    id: "opp-nvda-20260602-evening",
-    symbol: "NVDA",
-    name: "NVIDIA Corporation",
-    market: "NASDAQ",
-    opportunityType: "Swing trade",
+    id: "opp-itm-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-trading-update-itm",
+    symbol: "ITM.L",
+    name: "ITM Power plc",
+    market: "LSE",
+    opportunityType: "Earnings momentum",
     catalystSummary:
-      "High momentum and active sector attention create a review-worthy setup.",
-    score: 74,
-    priority: "Watch today",
-    sourceConfidence: "Medium",
-    sourceConfidenceScore: 76,
+      "Trading update highlights a mixed demand picture and revised expectations, so this stays review-only.",
+    score: 86,
+    priority: "High-priority review",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
     riskLevel: "High",
     suggestedPositionRange: "£5-£10",
-    suggestedHoldTimeframe: "Days to weeks",
-    exitPlan: "Reassess if volume weakens or the trend structure breaks.",
+    suggestedHoldTimeframe: "1 to 10 trading days",
+    exitPlan: "Reassess after the market reaction or if revised expectations are confirmed.",
     riskWarning:
-      "Volatility is elevated and position sizing should stay disciplined.",
-    evidencePlaceholders: [
-      "Price action placeholder",
-      "Volume confirmation placeholder",
-      "News catalyst placeholder",
+      "Mixed updates can reverse quickly and require a fresh read-through.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the mixed trading update into a high-priority review alert.",
+    invalidationNotes:
+      "Reassess if the demand picture proves less negative than the headline suggests.",
+    reviewBy: "2026-06-03",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Trading update highlighted a mixed demand picture and revised expectations.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/ITM/trading-update/mock-002",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
     ],
-    filterTags: ["Watch today", "Swing trades"],
-    scan: "Evening",
+    evidencePlaceholders: [
+      "Primary scored intelligence",
+      "Trading update evidence",
+      "Revised expectations",
+    ],
+    filterTags: ["High-priority review", "Watch today", "Swing trades"],
+    scan: "Morning",
   },
   {
-    id: "opp-rrl-20260602-evening",
-    symbol: "RR.L",
-    name: "Rolls-Royce Holdings plc",
+    id: "opp-barc-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-director-dealing-barc",
+    symbol: "BARC.L",
+    name: "Barclays plc",
     market: "LSE",
-    opportunityType: "Special situation",
+    opportunityType: "Swing trade",
     catalystSummary:
-      "Event-driven interest warrants a structured review rather than a rushed decision.",
-    score: 67,
+      "Director dealing discloses a modest open-market purchase, which is useful context but not a standalone trigger.",
+    score: 58,
     priority: "Monitor only",
-    sourceConfidence: "Medium",
-    sourceConfidenceScore: 72,
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
     riskLevel: "Medium",
-    suggestedPositionRange: "£5-£10",
-    suggestedHoldTimeframe: "Event window",
-    exitPlan: "Reassess after the catalyst or if the event thesis loses support.",
+    suggestedPositionRange: "£0-£5",
+    suggestedHoldTimeframe: "1 to 5 trading days",
+    exitPlan: "Reassess if the purchase is not supported by other evidence.",
     riskWarning:
-      "Headline risk and event risk can move faster than the thesis.",
-    evidencePlaceholders: [
-      "RNS placeholder",
-      "Event calendar placeholder",
-      "Company update placeholder",
+      "Director activity is useful context, not a standalone trigger.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules turned the director purchase into a monitor-only swing review.",
+    invalidationNotes:
+      "Reassess if the purchase proves immaterial or unrelated to the broader thesis.",
+    reviewBy: "2026-06-05",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Director dealing disclosed a modest open-market purchase.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/BARC/director-pdmr-shareholding/mock-003",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
     ],
-    filterTags: ["Monitor only"],
+    evidencePlaceholders: [
+      "Primary scored intelligence",
+      "Director dealing evidence",
+      "Context only",
+    ],
+    filterTags: ["Monitor only", "Swing trades"],
     scan: "Evening",
   },
   {
-    id: "opp-solg-20260602-morning",
+    id: "opp-solg-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-drill-solg",
     symbol: "SOLG",
     name: "SolGold plc",
     market: "AIM",
     opportunityType: "Mining/resource catalyst",
     catalystSummary:
-      "Fresh drilling commentary and financing context create a speculative review candidate, not an execution prompt.",
-    score: 49,
+      "Drill results report additional mineralisation, but the setup remains speculative and review-only.",
+    score: 91,
     priority: "Speculative review",
-    sourceConfidence: "Low-medium",
-    sourceConfidenceScore: 44,
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
     riskLevel: "Speculative",
     suggestedPositionRange: "£1-£3",
-    suggestedHoldTimeframe: "Catalyst window only",
-    exitPlan: "Reassess if follow-up RNS detail is weak or funding risk rises.",
+    suggestedHoldTimeframe: "Same day to 5 trading days",
+    exitPlan: "Reassess if follow-up technical detail or funding context weakens the thesis.",
     riskWarning:
-      "Thin liquidity, financing risk, and headline volatility make this unsuitable for oversized positions.",
+      "High volatility and speculative resource risk remain elevated.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the drilling update into a speculative mining/resource review.",
+    invalidationNotes:
+      "Reassess if follow-up assays, technical notes, or funding context weaken the catalyst.",
+    reviewBy: "2026-06-04",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Drill results reported additional mineralisation in a follow-up update.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/SOLG/drilling-update/mock-004",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
+    ],
     evidencePlaceholders: [
-      "RNS drill result placeholder",
-      "Commodity trend placeholder",
-      "Funding risk placeholder",
+      "Primary scored intelligence",
+      "Drill result evidence",
+      "Speculative catalyst",
     ],
     filterTags: ["Penny shares"],
     scan: "Morning",
   },
   {
-    id: "opp-xlk-20260602-evening",
+    id: "opp-aal-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-placing-aal",
+    symbol: "AAL.L",
+    name: "Anglesey Mining plc",
+    market: "LSE",
+    opportunityType: "Special situation",
+    catalystSummary:
+      "Placing and fundraising create dilution and funding risk, so this remains a high-priority review item.",
+    score: 94,
+    priority: "High-priority review",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    riskLevel: "High",
+    suggestedPositionRange: "£0",
+    suggestedHoldTimeframe: "Wait for dilution impact and market reaction",
+    exitPlan: "Reassess after pricing, dilution, and runway are clear.",
+    riskWarning:
+      "Dilution and funding risk are elevated.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the placing announcement into a high-priority special situation review.",
+    invalidationNotes:
+      "Reassess if dilution, pricing, or cash runway turn out less severe than expected.",
+    reviewBy: "2026-06-03",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Placing and fundraising announced to support ongoing project work.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/AAL/placing-and-subscription/mock-005",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
+    ],
+    evidencePlaceholders: [
+      "Primary scored intelligence",
+      "Fundraising evidence",
+      "Dilution risk",
+    ],
+    filterTags: ["High-priority review"],
+    scan: "Morning",
+  },
+  {
+    id: "opp-xyz-20260602-generated",
+    sourceIntelligenceItemId: "rns-mock-going-concern-xyz",
+    symbol: "XYZ.L",
+    name: "Example Resources plc",
+    market: "LSE",
+    opportunityType: "Special situation",
+    catalystSummary:
+      "Going concern warning is critical risk evidence and should only be reviewed, not acted on blindly.",
+    score: 98,
+    priority: "Avoid or reassess",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    riskLevel: "Critical",
+    suggestedPositionRange: "£0",
+    suggestedHoldTimeframe: "Avoid until clarified",
+    exitPlan: "Only reassess after the company confirms funding or risk resolution.",
+    riskWarning:
+      "Evidence indicates critical risk.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the going-concern warning into an avoid-or-reassess special situation alert.",
+    invalidationNotes:
+      "Reassess only after funding or risk resolution is confirmed.",
+    reviewBy: "2026-06-03",
+    confidenceLabel: "High",
+    evidenceItems: [
+      {
+        label: "Primary scored intelligence",
+        summary:
+          "Going concern warning issued alongside financing uncertainty.",
+        sourceUrl: "https://www.londonstockexchange.com/news-article/XYZ/going-concern-statement/mock-006",
+        evidenceType: "scored_intelligence",
+        isPrimary: true,
+      },
+    ],
+    evidencePlaceholders: [
+      "Primary scored intelligence",
+      "Going concern evidence",
+      "Avoid until clarified",
+    ],
+    filterTags: ["High-priority review"],
+    scan: "Morning",
+  },
+  {
+    id: "opp-xlk-20260602-generated",
+    sourceIntelligenceItemId: null,
     symbol: "XLK",
     name: "Technology Select Sector SPDR Fund",
     market: "NYSE",
@@ -512,6 +663,22 @@ export const opportunityAlerts: OpportunityAlert[] = [
     exitPlan: "Reassess if leadership fades or macro conditions rotate away from growth.",
     riskWarning:
       "Sector leadership can reverse quickly if macro risk appetite weakens.",
+    generatedBy: "deterministic_rules",
+    generationReason:
+      "Deterministic rules promoted the sector rotation evidence into a monitor-only review.",
+    invalidationNotes:
+      "Reassess if leadership fades or the macro backdrop weakens.",
+    reviewBy: "2026-06-07",
+    confidenceLabel: "Medium-high",
+    evidenceItems: [
+      {
+        label: "Sector rotation placeholder",
+        summary: "Relative strength and ETF flow context remain constructive.",
+        sourceUrl: "https://www.ssga.com/us/en/intermediary/etfs/funds/xlk",
+        evidenceType: "market_context",
+        isPrimary: true,
+      },
+    ],
     evidencePlaceholders: [
       "Relative strength placeholder",
       "ETF flow placeholder",
@@ -520,33 +687,7 @@ export const opportunityAlerts: OpportunityAlert[] = [
     filterTags: ["Monitor only", "Long-term"],
     scan: "Evening",
   },
-  {
-    id: "opp-pltr-20260602-morning",
-    symbol: "PLTR",
-    name: "Palantir Technologies Inc.",
-    market: "NYSE",
-    opportunityType: "Penny share catalyst",
-    catalystSummary:
-      "Narrative-driven interest is present, but evidence quality must remain tight.",
-    score: 46,
-    priority: "Speculative review",
-    sourceConfidence: "Low-medium",
-    sourceConfidenceScore: 42,
-    riskLevel: "Speculative",
-    suggestedPositionRange: "£1-£5",
-    suggestedHoldTimeframe: "Short review cycle",
-    exitPlan: "Reassess quickly if the catalyst does not earn confirmation.",
-    riskWarning:
-      "Volatility and narrative risk remain high for smaller accounts.",
-    evidencePlaceholders: [
-      "Social sentiment placeholder",
-      "News catalyst placeholder",
-      "Liquidity placeholder",
-    ],
-    filterTags: ["Penny shares", "Watch today"],
-    scan: "Morning",
-  },
-] as const;
+];
 
 export const recentIntelligenceItems: RecentIntelligenceItem[] = [
   {

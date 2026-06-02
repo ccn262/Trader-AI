@@ -152,3 +152,16 @@ Impact:
 - The `intelligence_items.impact_score` constraint now supports `-100` to `+100`.
 - Negative values can be recorded for adverse announcements and risk-heavy events.
 - `score_history` remains compatible with negative scores so scoring deltas still make sense.
+
+## 2026-06-02 - Evidence-driven alert generation
+
+Decision: Generate review-only opportunity alerts from scored intelligence items using deterministic rules and linked evidence records.
+
+Reason: The app now has scored evidence and needs a durable, idempotent way to convert that evidence into explicit human-review tasks without drifting into trade instructions.
+
+Impact:
+
+- `opportunity_alerts` now carry provenance fields for the source intelligence item, generation reason, and review-by date.
+- `opportunity_evidence` now supports primary/evidence flags for clearer auditability.
+- The alert generator should be idempotent and should never create duplicate alerts for the same scored intelligence item.
+- Going-concern, placing, trading-update, director-dealing, and resource-catalyst evidence stays review-only and never turns into buy language.

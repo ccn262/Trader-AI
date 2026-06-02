@@ -36,3 +36,7 @@
 - Updated `/alerts` recent intelligence output and mock fallback data to expose classification, impact direction, risk level, priority, and scoring reason as read-only evidence.
 - Added a follow-up migration to allow negative `intelligence_items.impact_score` values and matching negative `score_history.score` values for adverse announcements.
 - Made the RNS scoring script return a nonzero exit code when row-level scoring fails, so missing database migrations are reported cleanly.
+- Added `docs/ALERT_GENERATION_SPEC.md` and Phase 9 deterministic alert-generation rules for converting scored intelligence into review-only opportunity alerts.
+- Added `supabase/migrations/20260609_phase9_alert_generation.sql` for alert provenance fields, evidence flags, and idempotent generation indexes.
+- Added a deterministic opportunity-alert generation module and `npm run generate:opportunity-alerts` for review-only alert creation from scored intelligence items.
+- Updated the alerts page and mock fallback data so generated alerts can show generation reason, review-by date, and source/evidence links.
