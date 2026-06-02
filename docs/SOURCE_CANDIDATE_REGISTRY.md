@@ -66,6 +66,8 @@ Workflow:
 5. Record the outcome in the registry.
 6. Only move to validation or parsing after the source shape is understood.
 
+Diagnostics should be stored separately in `source_diagnostics` so the evaluation history can be reviewed later. See [docs/SOURCE_EVALUATION_WORKFLOW.md](./SOURCE_EVALUATION_WORKFLOW.md) for the lifecycle and review rules.
+
 ## Rules For Rejecting Sources
 
 Reject or downgrade a source when:
@@ -106,4 +108,5 @@ The registry should be used to:
 - decide whether a source can feed `raw_announcements`
 - document why a source was rejected, paid, or left manual-only
 - help future parser work start from a known source shape instead of guesswork
+- provide a stable source of truth for candidate metadata while diagnostics are evaluated over time
 

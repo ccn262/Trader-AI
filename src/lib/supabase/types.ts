@@ -168,9 +168,33 @@ export interface SourceCandidateRow {
   diagnostic_status: string | null;
   diagnostic_summary: string | null;
   last_checked_at: string | null;
+  validation_owner: string | null;
+  validation_notes: string | null;
+  last_diagnostic_id: string | null;
+  validated_at: string | null;
+  rejected_at: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SourceDiagnosticRow {
+  id: string;
+  source_candidate_id: string;
+  checked_url: string;
+  http_status: number;
+  content_type: string;
+  response_length: number;
+  page_title: string | null;
+  anchor_count: number;
+  likely_rns_href_count: number;
+  appears_javascript_rendered: boolean;
+  valid_external_urls_count: number;
+  rejected_urls_count: number;
+  diagnostic_summary: string;
+  recommendation: string;
+  raw_sample: Record<string, unknown> | null;
+  created_at: string;
 }
 
 export interface IntelligenceItemRow {
@@ -365,6 +389,11 @@ export interface Database {
         Row: SourceCandidateRow;
         Insert: Partial<Omit<SourceCandidateRow, "id" | "created_at" | "updated_at">>;
         Update: Partial<SourceCandidateRow>;
+      };
+      source_diagnostics: {
+        Row: SourceDiagnosticRow;
+        Insert: Partial<Omit<SourceDiagnosticRow, "id" | "created_at">>;
+        Update: Partial<SourceDiagnosticRow>;
       };
       intelligence_items: {
         Row: IntelligenceItemRow;

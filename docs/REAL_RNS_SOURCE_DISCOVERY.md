@@ -128,6 +128,7 @@ Diagnostic steps:
    - whether the page appears JavaScript-rendered
 4. Decide whether the source exposes plain HTML, RSS-like markup, or a JS-rendered shell.
 5. Only add parser logic after the diagnostic output shows the source shape clearly.
+6. If you need to preserve the result, set `SOURCE_DIAGNOSTIC_PERSIST=true` together with `SOURCE_CANDIDATE_ID=<uuid>` so the diagnostic can be attached to the registry as a read-only review record.
 
 ## JavaScript-Rendered Sources
 
@@ -151,6 +152,8 @@ Rules:
 - The London Stock Exchange `/news` page is currently tracked as JS-rendered and rejected for simple parsing because the diagnostics showed anchorCount 0 and likelyRnsHrefCount 0.
 - Rejection does not mean the source is useless; it means the current adapter strategy should not force scraping or pretend the source is already parse-ready.
 - See [docs/SOURCE_CANDIDATE_REGISTRY.md](./SOURCE_CANDIDATE_REGISTRY.md) for the registry schema and validation rules.
+- Diagnostics can be persisted as read-only evaluation history in `source_diagnostics` so later review can compare source shape over time.
+- See [docs/SOURCE_EVALUATION_WORKFLOW.md](./SOURCE_EVALUATION_WORKFLOW.md) for the candidate lifecycle and review criteria.
 
 ## Validation Gate
 

@@ -48,6 +48,7 @@ Optional environment variables for RNS source discovery:
 - `RNS_SOURCE_API_KEY` if a future provider requires one
 - `RNS_REAL_FETCH_ENABLED=true` for controlled manual real-source validation
 - `RNS_REAL_FETCH_LIMIT` to cap the small validation fetch count
+- `SOURCE_DIAGNOSTIC_PERSIST=true` and `SOURCE_CANDIDATE_ID=<uuid>` to save a diagnostic into the source evaluation workflow
 
 The current app reads from Supabase on the server when configured, and falls back to local mock data when the variables are missing.
 
@@ -89,6 +90,12 @@ RNS source discovery:
 - Real-source discovery is manual-first and config-gated; it is not enabled for unattended scans by default.
 - Real validation requires `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true`.
 - The source candidate registry lives at `/sources` and tracks candidate, validating, validated, rejected, paid-required, and manual-only sources.
+- Candidate detail pages live at `/sources/[id]` and show the latest diagnostics timeline for each source.
+
+Security warning:
+
+- Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TRADER_AI_ADMIN_SECRET`, `CRON_SECRET`, or the source evaluation env vars client-side.
+- Keep `SOURCE_DIAGNOSTIC_PERSIST` and `SOURCE_CANDIDATE_ID` server-side or local-only.
 
 ## First milestone
 

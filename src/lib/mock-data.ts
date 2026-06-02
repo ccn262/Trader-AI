@@ -895,6 +895,12 @@ export const sourceCandidates = [
     diagnosticSummary:
       "HTTP 200, title present, anchorCount 0, likelyRnsHrefCount 0, appearsJavaScriptRendered true",
     lastCheckedAt: "2026-06-02T09:15:00Z",
+    validationOwner: "Manual review",
+    validationNotes:
+      "The page is reachable but does not expose parseable anchors for a simple server fetch.",
+    lastDiagnosticId: "mock-source-diagnostic-lse-news-0915",
+    validatedAt: null,
+    rejectedAt: "2026-06-02T09:15:00Z",
     notes:
       "Reachable but not suitable for simple server-side parsing. Keep as a diagnostic reference only.",
     createdAt: "2026-06-11T00:00:00Z",
@@ -912,6 +918,12 @@ export const sourceCandidates = [
     diagnosticSummary:
       "Candidate source tracked for future parser work; requires manual validation before any ingestion change.",
     lastCheckedAt: null,
+    validationOwner: "Manual review",
+    validationNotes:
+      "Keep manual-first and re-evaluate after a parser strategy is defined.",
+    lastDiagnosticId: "mock-source-diagnostic-lse-news-0900",
+    validatedAt: null,
+    rejectedAt: null,
     notes: "Keep manual-first. Do not force scraping or unattended crawling.",
     createdAt: "2026-06-11T00:00:00Z",
     updatedAt: "2026-06-11T00:00:00Z",
@@ -928,6 +940,12 @@ export const sourceCandidates = [
     diagnosticSummary:
       "Official issuer pages are useful for manual review and future validation, but coverage and formatting vary by company.",
     lastCheckedAt: null,
+    validationOwner: "Manual review",
+    validationNotes:
+      "Track as a manual-only candidate until issuer-by-issuer coverage is understood.",
+    lastDiagnosticId: "mock-source-diagnostic-company-ir-0910",
+    validatedAt: null,
+    rejectedAt: null,
     notes:
       "Track as a future source category rather than a single parse target.",
     createdAt: "2026-06-11T00:00:00Z",
@@ -945,6 +963,12 @@ export const sourceCandidates = [
     diagnosticSummary:
       "A structured feed or API may be useful later, but access is commercial and should not be assumed available.",
     lastCheckedAt: null,
+    validationOwner: "Research review",
+    validationNotes:
+      "Paid provider candidate only. Do not assume commercial access until procurement is confirmed.",
+    lastDiagnosticId: "mock-source-diagnostic-paid-provider-0912",
+    validatedAt: null,
+    rejectedAt: null,
     notes:
       "Future option only; do not build around unavailable commercial access.",
     createdAt: "2026-06-11T00:00:00Z",
@@ -962,9 +986,126 @@ export const sourceCandidates = [
     diagnosticSummary:
       "Validated future source type for US filings if a US source path is later required.",
     lastCheckedAt: null,
+    validationOwner: "Research review",
+    validationNotes:
+      "Validated future source type for US disclosures; not part of the current ingestion scope.",
+    lastDiagnosticId: "mock-source-diagnostic-sec-filings-0920",
+    validatedAt: "2026-06-02T09:20:00Z",
+    rejectedAt: null,
     notes: "High-confidence future source class for US disclosures.",
     createdAt: "2026-06-11T00:00:00Z",
     updatedAt: "2026-06-11T00:00:00Z",
+  },
+] as const;
+
+export const sourceDiagnostics = [
+  {
+    id: "mock-source-diagnostic-lse-news-0900",
+    sourceCandidateId: "mock-source-candidate-lse-news-validating",
+    checkedUrl: "https://www.londonstockexchange.com/news",
+    httpStatus: 200,
+    contentType: "text/html; charset=utf-8",
+    responseLength: 54995,
+    pageTitle: "London Stock Exchange | London Stock Exchange",
+    anchorCount: 0,
+    likelyRnsHrefCount: 0,
+    appearsJavascriptRendered: true,
+    validExternalUrlsCount: 0,
+    rejectedUrlsCount: 0,
+    diagnosticSummary:
+      "Reachable but JS-rendered; no anchors were exposed for a simple server fetch.",
+    recommendation: "manual_review_then_parser_rethink",
+    rawSample: {
+      first20Hrefs: [],
+      note: "No hrefs surfaced in the fetched HTML.",
+    },
+    createdAt: "2026-06-02T09:00:00Z",
+  },
+  {
+    id: "mock-source-diagnostic-lse-news-0915",
+    sourceCandidateId: "mock-source-candidate-lse-news-rejected",
+    checkedUrl: "https://www.londonstockexchange.com/news",
+    httpStatus: 200,
+    contentType: "text/html; charset=utf-8",
+    responseLength: 54995,
+    pageTitle: "London Stock Exchange | London Stock Exchange",
+    anchorCount: 0,
+    likelyRnsHrefCount: 0,
+    appearsJavascriptRendered: true,
+    validExternalUrlsCount: 0,
+    rejectedUrlsCount: 0,
+    diagnosticSummary:
+      "JS-rendered shell with no extractable announcement links; not suitable for a simple parser.",
+    recommendation: "unsuitable_for_simple_parser",
+    rawSample: {
+      first20Hrefs: [],
+      note: "Diagnostic confirms the page should not be forced into scraping.",
+    },
+    createdAt: "2026-06-02T09:15:00Z",
+  },
+  {
+    id: "mock-source-diagnostic-company-ir-0910",
+    sourceCandidateId: "mock-source-candidate-company-ir",
+    checkedUrl: "https://example.com/investor-relations",
+    httpStatus: 200,
+    contentType: "text/html; charset=utf-8",
+    responseLength: 12842,
+    pageTitle: "Investor Relations",
+    anchorCount: 12,
+    likelyRnsHrefCount: 2,
+    appearsJavascriptRendered: false,
+    validExternalUrlsCount: 2,
+    rejectedUrlsCount: 0,
+    diagnosticSummary:
+      "Manual-only issuer page with some announcement-style links, but coverage will vary by company.",
+    recommendation: "manual_only_future_candidate",
+    rawSample: {
+      first20Hrefs: ["/results.pdf", "/webcast", "/news"],
+    },
+    createdAt: "2026-06-02T09:10:00Z",
+  },
+  {
+    id: "mock-source-diagnostic-paid-provider-0912",
+    sourceCandidateId: "mock-source-candidate-paid-provider",
+    checkedUrl: "https://example.com/structured-feed",
+    httpStatus: 403,
+    contentType: "text/html; charset=utf-8",
+    responseLength: 2048,
+    pageTitle: "Access denied",
+    anchorCount: 1,
+    likelyRnsHrefCount: 0,
+    appearsJavascriptRendered: false,
+    validExternalUrlsCount: 0,
+    rejectedUrlsCount: 1,
+    diagnosticSummary:
+      "Commercial provider candidate is gated and not available without a paid contract.",
+    recommendation: "paid_required",
+    rawSample: {
+      first20Hrefs: ["/pricing"],
+      note: "No accessible announcement feed is available in the mock example.",
+    },
+    createdAt: "2026-06-02T09:12:00Z",
+  },
+  {
+    id: "mock-source-diagnostic-sec-filings-0920",
+    sourceCandidateId: "mock-source-candidate-sec-filings",
+    checkedUrl: "https://www.sec.gov/edgar/search/",
+    httpStatus: 200,
+    contentType: "text/html; charset=utf-8",
+    responseLength: 45210,
+    pageTitle: "EDGAR Search",
+    anchorCount: 8,
+    likelyRnsHrefCount: 0,
+    appearsJavascriptRendered: false,
+    validExternalUrlsCount: 3,
+    rejectedUrlsCount: 0,
+    diagnosticSummary:
+      "Validated future source type for US filings with accessible structured search output.",
+    recommendation: "validated_future_source_type",
+    rawSample: {
+      first20Hrefs: ["/cgi-bin/browse-edgar?action=getcompany", "/search"],
+    },
+    createdAt: "2026-06-02T09:20:00Z",
   },
 ] as const;
 
