@@ -98,6 +98,7 @@ Rules:
 - `diagnostic_status`: `not_suitable_for_simple_parser`
 - `diagnostic_summary`: `HTTP 200, title present, anchorCount 0, likelyRnsHrefCount 0, appearsJavaScriptRendered true`
 - `notes`: `Reachable but not suitable for simple HTML parsing; keep as a diagnostic reference, not verified evidence.`
+- `signal_model`: `Discovery-only / not suitable for primary evidence flow without a validated parser strategy.`
 
 ## Registry Use In Trader AI
 
@@ -105,6 +106,7 @@ The registry should be used to:
 
 - track candidate sources and validation outcomes
 - separate official evidence from mock/demo references
+- record tier, licence status, and alert eligibility alongside registry metadata so the signal model stays visible
 - decide whether a source can feed `raw_announcements`
 - document why a source was rejected, paid, or left manual-only
 - help future parser work start from a known source shape instead of guesswork

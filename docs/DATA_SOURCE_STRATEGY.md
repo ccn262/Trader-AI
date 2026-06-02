@@ -205,6 +205,26 @@ Rules:
 - Flag rumours explicitly as low confidence.
 - Prefer official filings, direct company statements, and high-quality reporting.
 
+## Multi-Source Signal Model
+
+Trader AI should not treat every source as equal signal weight.
+
+Guidance:
+
+- Tier 1 primary evidence can drive scored intelligence and review alerts.
+- Tier 2 professional news can confirm or contextualise, but should still respect licence and access rules.
+- Tier 3 aggregators usually contextualise or corroborate, rather than create conviction on their own.
+- Tier 4 press wires can surface company-authored promotional context, but should remain review-only and be checked against primary evidence.
+- Tier 5 forums and social chatter are discovery-only unless a primary source later confirms the claim.
+
+Rules:
+
+- Rumours should never outrank verified primary evidence.
+- Pump language should reduce confidence, not increase it.
+- Licensed or paid professional news must remain gated until access is validated.
+- Discovery-only social signals should be visible in the UI, but they must not behave like verified evidence.
+- Treat placeholder or demo URLs as mock references, not live proof.
+
 ## Future Integration Guidance
 
 Future implementation should:

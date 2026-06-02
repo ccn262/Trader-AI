@@ -44,6 +44,8 @@ Use this file to keep Codex and future sessions aligned.
 - A diagnostic-only source inspection script is being added so the raw page title, anchor count, href sample, and JS-rendered hint can be reviewed without writing to Supabase.
 - A source candidate registry is being added so candidate, validating, validated, rejected, paid-required, and manual-only sources can be reviewed in one place on `/sources`.
 - A source evaluation workflow is being added so diagnostics can be stored, reviewed, and shown on `/sources/[id]` without enabling ingestion or cron.
+- A multi-source signal model is being added so tier 1 primary evidence, tier 2 professional news, tier 3 aggregators, tier 4 press wires, and tier 5 social/forum signals are weighted differently and shown clearly in the UI.
+- Social/forum chatter should remain discovery-only unless primary evidence confirms it, and pump-risk language should lower confidence rather than increase it.
 
 ## Next recommended action
 

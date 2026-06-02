@@ -275,3 +275,17 @@ Impact:
 - `/sources/[id]` provides a review page with the latest diagnostic and a timeline.
 - The diagnostic script can optionally persist a read-only review record when explicitly configured.
 - Real-source ingestion still stays manual-first and gated by validation rules.
+
+## 2026-06-02 - Multi-source signal model
+
+Decision: Add tiered source weighting and signal flags so evidence sources are not treated equally.
+
+Reason: Primary evidence, professional news, aggregators, press wires, and social/forum chatter have different trust characteristics, and the app needs to expose those differences clearly without letting rumours or pump language raise confidence.
+
+Impact:
+
+- Tier 1 primary evidence can drive review alerts.
+- Tier 2 professional news can confirm or contextualise but stays licence-aware.
+- Tier 3 aggregator and market-site content is lower-weight context.
+- Tier 4 press wires stay review-only and company-authored or promotional when relevant.
+- Tier 5 social/forum chatter remains discovery-only until primary evidence confirms the claim.

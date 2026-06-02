@@ -4,9 +4,11 @@ import { AttentionPanel, PriorityBadge } from "@/components/attention";
 import { AppShell } from "@/components/app-shell";
 import {
   getLatestSourceDiagnostics,
+  getIntelligenceSources,
   getSourceCandidates,
   type SourceCandidateViewModel,
   type SourceDiagnosticViewModel,
+  type IntelligenceSourceViewModel,
 } from "@/lib/data";
 
 function getSourceTone(status: SourceCandidateViewModel["status"]) {
@@ -40,10 +42,19 @@ function getLatestDiagnosticByCandidate(
   return map;
 }
 
+function getSignalTone(source: IntelligenceSourceViewModel | SourceCandidateViewModel) {
+  if (source.sourceTier === 1) return "healthy" as const;
+  if (source.sourceTier === 2) return "watch" as const;
+  if (source.sourceTier === 3) return "core" as const;
+  if (source.sourceTier === 4) return "watch" as const;
+  return "speculative" as const;
+}
+
 export default async function SourcesPage() {
-  const [candidates, diagnostics] = await Promise.all([
+  const [candidates, diagnostics, intelligenceSources] = await Promise.all([
     getSourceCandidates(),
     getLatestSourceDiagnostics(),
+    getIntelligenceSources(),
   ]);
   const diagnosticsByCandidate = getLatestDiagnosticByCandidate(diagnostics);
   const counts = {
@@ -148,6 +159,12 @@ export default async function SourcesPage() {
                         <span className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5">
                           {formatLabel(candidate.accessMethod)}
                         </span>
+                        <span className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5">
+                          {candidate.sourceTierLabel}
+                        </span>
+                        <span className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-1.5">
+                          Licence: {formatLabel(candidate.sourceLicenceStatus)}
+                        </span>
                       </div>
                     </div>
                     <div className="rounded-3xl border border-white/10 bg-slate-950/60 px-4 py-3">
@@ -156,6 +173,41 @@ export default async function SourcesPage() {
                       </p>
                       <p className="mt-2 text-3xl font-semibold text-white">
                         {candidate.confidenceScore}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Source tier
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {candidate.sourceTierLabel}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Weighting
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {candidate.weightingMultiplier.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Can create alerts
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {candidate.canCreateAlerts ? "Yes" : "No"}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Primary confirmation
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {candidate.requiresPrimaryConfirmation ? "Required" : "Not required"}
                       </p>
                     </div>
                   </div>
@@ -278,6 +330,91 @@ export default async function SourcesPage() {
             </p>
           </section>
         )}
+
+        {intelligenceSources.length ? (
+          <section className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-5">
+            <div>
+              <p className="text-sm text-slate-400">Signal model</p>
+              <h2 className="text-xl font-semibold text-white">
+                Tiered source profiles
+              </h2>
+            </div>
+
+            <div className="grid gap-4 xl:grid-cols-2">
+              {intelligenceSources.map((source) => (
+                <article
+                  key={source.id}
+                  className="rounded-[28px] border border-white/10 bg-slate-950/55 p-4"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <PriorityBadge tone={getSignalTone(source)} label={source.sourceTierLabel} />
+                      <h3 className="mt-3 text-lg font-semibold text-white">
+                        {source.name}
+                      </h3>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">
+                        {source.notes}
+                      </p>
+                    </div>
+                    <PriorityBadge
+                      tone={source.discoveryOnly ? "speculative" : getSignalTone(source)}
+                      label={
+                        source.discoveryOnly
+                          ? "Discovery only"
+                          : source.sourceLicenceStatus.replaceAll("_", " ")
+                      }
+                    />
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Access method
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {formatLabel(source.sourceAccessMethod)}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Weighting
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {source.weightingMultiplier.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Alerts
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {source.canCreateAlerts ? "Can create review alerts" : "Discovery only"}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Confirmation
+                      </p>
+                      <p className="mt-2 text-sm font-semibold text-white">
+                        {source.requiresPrimaryConfirmation ? "Primary evidence required" : "No primary confirmation required"}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4 sm:col-span-2 xl:col-span-3">
+                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Signal notes
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">
+                        {source.discoveryOnly
+                          ? "Discovery-only social/forum signals must be verified against primary evidence before they can influence review."
+                          : source.signalWeightingExplanation}
+                      </p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

@@ -82,6 +82,11 @@ export default async function SourceCandidateDetailPage({
               tone="core"
               label={formatLabel(candidate.accessMethod)}
             />
+            <PriorityBadge tone="core" label={candidate.sourceTierLabel} />
+            <PriorityBadge
+              tone={candidate.discoveryOnly ? "speculative" : tone}
+              label={formatLabel(candidate.sourceLicenceStatus)}
+            />
             <PriorityBadge tone="core" label={`${candidate.confidenceScore} confidence`} />
             <PriorityBadge tone="core" label="No ingestion action yet" />
           </div>
@@ -153,6 +158,54 @@ export default async function SourceCandidateDetailPage({
               </div>
             </div>
 
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Source tier
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {candidate.sourceTierLabel}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Licence status
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {formatLabel(candidate.sourceLicenceStatus)}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Weighting multiplier
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {candidate.weightingMultiplier.toFixed(2)}
+                </p>
+              </div>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Alert eligibility
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {candidate.canCreateAlerts ? "Can create review alerts" : "Discovery only"}
+                </p>
+              </div>
+              <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                  Primary confirmation
+                </p>
+                <p className="mt-2 text-sm font-semibold text-white">
+                  {candidate.requiresPrimaryConfirmation
+                    ? "Required before promotion"
+                    : "Not required for this tier"}
+                </p>
+              </div>
+            </div>
+
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
                 <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
@@ -196,6 +249,20 @@ export default async function SourceCandidateDetailPage({
                 </p>
               </div>
             )}
+
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4 text-sm leading-6 text-slate-300">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Signal model
+              </p>
+              <p className="mt-2 text-white font-semibold">
+                {candidate.discoveryOnly
+                  ? "Discovery only"
+                  : candidate.sourceTierLabel}
+              </p>
+              <p className="mt-2">
+                {candidate.signalWeightingExplanation}
+              </p>
+            </div>
           </div>
 
           <div className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-5">

@@ -144,6 +144,27 @@ export interface IntelligenceSourceRow {
     | "analyst"
     | "social"
     | "other";
+  tier: number | null;
+  access_method:
+    | "api"
+    | "rss"
+    | "html"
+    | "js_rendered"
+    | "manual"
+    | "paid_provider"
+    | "app_connector"
+    | "other"
+    | null;
+  licence_status:
+    | "open"
+    | "paid_required"
+    | "licensed"
+    | "unknown"
+    | "not_allowed"
+    | null;
+  weighting_multiplier: number | null;
+  can_create_alerts: boolean;
+  requires_primary_confirmation: boolean;
   base_url: string | null;
   confidence_score: number;
   is_active: boolean;
@@ -206,6 +227,26 @@ export interface IntelligenceItemRow {
   headline: string;
   summary: string | null;
   classification: string | null;
+  signal_type:
+    | "primary_evidence"
+    | "confirming_news"
+    | "market_movement"
+    | "social_attention"
+    | "rumour"
+    | "risk_warning"
+    | "pump_risk_warning"
+    | "press_release"
+    | "aggregator_summary"
+    | "analyst_signal"
+    | "other"
+    | null;
+  source_tier: number | null;
+  weighting_multiplier: number | null;
+  primary_confirmation_required: boolean;
+  confirmed_by_primary_source: boolean;
+  confirmation_source_id: string | null;
+  rumour_flag: boolean;
+  pump_risk_flag: boolean;
   impact_direction:
     | "positive"
     | "negative"

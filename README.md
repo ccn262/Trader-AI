@@ -91,6 +91,8 @@ RNS source discovery:
 - Real validation requires `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true`.
 - The source candidate registry lives at `/sources` and tracks candidate, validating, validated, rejected, paid-required, and manual-only sources.
 - Candidate detail pages live at `/sources/[id]` and show the latest diagnostics timeline for each source.
+- The source signal model adds tiers and licence status so primary evidence, professional news, aggregators, press wires, and social/forum chatter are never weighted equally.
+- Intelligence detail pages at `/intelligence/[id]` surface signal type, tier, rumour/pump-risk flags, and primary confirmation status.
 
 Security warning:
 

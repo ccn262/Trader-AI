@@ -99,6 +99,28 @@ export default async function IntelligenceDetailPage({
               {item.sourceName}
             </span>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <PriorityBadge tone={tone} label={item.signalType.replaceAll("_", " ")} />
+            <PriorityBadge tone="core" label={item.sourceTierLabel} />
+            <PriorityBadge tone="core" label={item.sourceLicenceStatus.replaceAll("_", " ")} />
+            <PriorityBadge tone="core" label={`Weight ${item.weightingMultiplier.toFixed(2)}`} />
+            <PriorityBadge
+              tone={item.confirmedByPrimarySource ? "healthy" : tone}
+              label={
+                item.confirmedByPrimarySource
+                  ? "Primary confirmation present"
+                  : item.primaryConfirmationRequired
+                    ? "Primary confirmation required"
+                    : "Primary confirmation optional"
+              }
+            />
+            {item.rumourFlag ? (
+              <PriorityBadge tone="urgent" label="Rumour flag" />
+            ) : null}
+            {item.pumpRiskFlag ? (
+              <PriorityBadge tone="urgent" label="Pump-risk flag" />
+            ) : null}
+          </div>
         </AttentionPanel>
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
@@ -134,6 +156,9 @@ export default async function IntelligenceDetailPage({
             <PriorityBadge tone="core" label={item.sourceName} />
             <RiskBadge risk={item.riskLevel} />
             <PriorityBadge tone={tone} label={item.verificationStatus} />
+            {item.discoveryOnly ? (
+              <PriorityBadge tone="speculative" label="Discovery only" />
+            ) : null}
           </div>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -170,6 +195,55 @@ export default async function IntelligenceDetailPage({
               </p>
             </div>
           </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Signal type
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {item.signalType.replaceAll("_", " ")}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Source tier / weighting
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {item.sourceTierLabel}
+              </p>
+              <p className="mt-1 text-sm text-slate-400">
+                Weighting {item.weightingMultiplier.toFixed(2)}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Primary confirmation
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {item.confirmedByPrimarySource ? "Confirmed" : "Not yet confirmed"}
+              </p>
+              <p className="mt-1 text-sm text-slate-400">
+                {item.primaryConfirmationRequired
+                  ? "Required for this source tier"
+                  : "Not required for this source tier"}
+              </p>
+            </div>
+          </div>
+
+          {item.discoveryOnly ? (
+            <div className="mt-5 rounded-3xl border border-violet-300/30 bg-violet-300/10 p-4 text-sm leading-6 text-violet-50">
+              Discovery signal only — primary evidence required before acting.
+            </div>
+          ) : null}
+
+          {item.rumourFlag || item.pumpRiskFlag ? (
+            <div className="mt-5 rounded-3xl border border-rose-300/30 bg-rose-300/10 p-4 text-sm leading-6 text-rose-50">
+              {item.pumpRiskFlag
+                ? "Pump-risk language lowers confidence and should not increase conviction."
+                : "Rumour language lowers confidence and should not override primary evidence."}
+            </div>
+          ) : null}
 
           <div className="mt-5 rounded-3xl border border-white/10 bg-slate-950/60 p-4">
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">

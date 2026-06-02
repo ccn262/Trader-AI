@@ -386,6 +386,12 @@ export default async function AlertsPage({
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
                           Source / evidence
                         </p>
+                        {alert.containsDiscoverySignals ? (
+                          <div className="mt-3 rounded-3xl border border-violet-300/30 bg-violet-300/10 p-4 text-sm leading-6 text-violet-50">
+                            {alert.discoverySignalWarning ??
+                              "Contains social/discovery signals. Verify against primary evidence."}
+                          </div>
+                        ) : null}
                         <div className="mt-3 space-y-3">
                           {alert.evidenceItems.length ? (
                             alert.evidenceItems.map((item) => {
@@ -429,6 +435,24 @@ export default async function AlertsPage({
                                           : "Evidence"
                                       }
                                     />
+                                    {item.signalType ? (
+                                      <PriorityBadge
+                                        tone={item.discoveryOnly ? "speculative" : tone}
+                                        label={item.signalType.replaceAll("_", " ")}
+                                      />
+                                    ) : null}
+                                    {item.sourceTierLabel ? (
+                                      <PriorityBadge
+                                        tone={item.discoveryOnly ? "speculative" : tone}
+                                        label={item.sourceTierLabel}
+                                      />
+                                    ) : null}
+                                    {item.rumourFlag ? (
+                                      <PriorityBadge tone="urgent" label="Rumour" />
+                                    ) : null}
+                                    {item.pumpRiskFlag ? (
+                                      <PriorityBadge tone="urgent" label="Pump risk" />
+                                    ) : null}
                                   </div>
                                   <p className="mt-3 text-sm font-semibold text-white">
                                     {item.label}
@@ -436,6 +460,11 @@ export default async function AlertsPage({
                                   <p className="mt-2 text-sm leading-6 text-slate-300">
                                     {item.summary}
                                   </p>
+                                  {item.discoveryOnly ? (
+                                    <p className="mt-2 text-xs uppercase tracking-[0.24em] text-violet-200/80">
+                                      Discovery signal only - primary evidence required
+                                    </p>
+                                  ) : null}
                                   {linkMode === "external" && isExternal && href ? (
                                     <a
                                       href={href}
@@ -461,6 +490,11 @@ export default async function AlertsPage({
                                       {actionLabel}
                                     </button>
                                   )}
+                                  {item.signalWeightingExplanation ? (
+                                    <p className="mt-3 text-xs leading-5 text-slate-400">
+                                      {item.signalWeightingExplanation}
+                                    </p>
+                                  ) : null}
                                   {linkMode === "internal" ? (
                                     <p className="mt-3 text-xs uppercase tracking-[0.24em] text-amber-200/80">
                                       Demo/sample evidence - not a live market source
@@ -566,11 +600,11 @@ export default async function AlertsPage({
                       <PriorityBadge tone={tone} label={item.priority} />
                     </div>
 
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                          Source confidence
-                        </p>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                            Source confidence
+                          </p>
                         <p className="mt-2 text-lg font-semibold text-white">
                           {item.sourceConfidence}
                         </p>
@@ -589,23 +623,56 @@ export default async function AlertsPage({
                           Risk level {item.riskLevel}
                         </p>
                       </div>
+                        <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                          <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                            Published
+                          </p>
+                          <p className="mt-2 text-lg font-semibold text-white">
+                            {item.publishedAt}
+                          </p>
+                          <p className="mt-1 text-sm text-slate-400">
+                            Stored as review-only intelligence
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="mt-4 flex flex-wrap gap-2">
+                        {item.signalType ? (
+                          <PriorityBadge
+                            tone={item.discoveryOnly ? "speculative" : tone}
+                            label={item.signalType.replaceAll("_", " ")}
+                          />
+                        ) : null}
+                        {item.sourceTierLabel ? (
+                          <PriorityBadge tone="core" label={item.sourceTierLabel} />
+                        ) : null}
+                        {item.sourceLicenceStatus ? (
+                          <PriorityBadge
+                            tone="core"
+                            label={item.sourceLicenceStatus.replaceAll("_", " ")}
+                          />
+                        ) : null}
+                        {item.confirmedByPrimarySource ? (
+                          <PriorityBadge tone="healthy" label="Primary confirmed" />
+                        ) : null}
+                        {item.rumourFlag ? (
+                          <PriorityBadge tone="urgent" label="Rumour flag" />
+                        ) : null}
+                        {item.pumpRiskFlag ? (
+                          <PriorityBadge tone="urgent" label="Pump risk" />
+                        ) : null}
+                      </div>
+
+                      {item.discoveryOnly ? (
+                        <div className="mt-4 rounded-3xl border border-violet-300/30 bg-violet-300/10 p-4 text-sm leading-6 text-violet-50">
+                          Discovery signal only - primary evidence required before acting.
+                        </div>
+                      ) : null}
+
                       <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
                         <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                          Published
+                          Scoring reason
                         </p>
-                        <p className="mt-2 text-lg font-semibold text-white">
-                          {item.publishedAt}
-                        </p>
-                        <p className="mt-1 text-sm text-slate-400">
-                          Stored as review-only intelligence
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
-                        Scoring reason
-                      </p>
                       <p className="mt-2 text-sm leading-6 text-slate-300">
                         {item.scoringReason}
                       </p>

@@ -53,3 +53,4 @@
 - Added a diagnostic-only RNS source inspection script and `npm run diagnose:rns-source` so the raw source shape can be inspected before parser logic is expanded.
 - Added a source candidate registry with seeded validation statuses, a read-only `/sources` page, and registry documentation for LSE `/news` and future source classes.
 - Added a source evaluation workflow with diagnostics storage, candidate detail pages, and optional persisted diagnostics from the read-only RNS diagnostic script.
+- Added the multi-source signal model so intelligence sources now carry tier, licence, weighting, alert-eligibility, rumour, and pump-risk metadata across `/sources`, `/sources/[id]`, `/intelligence/[id]`, and `/alerts`.

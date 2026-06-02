@@ -137,6 +137,17 @@ Rules:
 - Mock/demo evidence should route internally to the intelligence detail page or be shown as unavailable if no safe internal reference exists.
 - Missing evidence must be shown as unavailable instead of linking to a fake or broken source.
 
+## Multi-Source Signal Caution
+
+Alerts may include evidence that originated from discovery-only or social sources, but those items must be clearly flagged.
+
+Rules:
+
+- Social or forum evidence should display a caution that primary evidence is still required.
+- Rumour or pump-risk language should reduce confidence and should never increase alert conviction.
+- Tier 1 evidence can create alerts directly; lower tiers should usually contribute as confirmation, context, or discovery.
+- Do not create a high-confidence alert from social chatter alone.
+
 ## Deduplication And Idempotency
 
 Alert generation must be repeatable.

@@ -51,6 +51,14 @@ Examples:
 - A source that clearly needs commercial access should become `paid_required`.
 - A source that is useful only for manual review should become `manual_only`.
 
+Diagnostics should also inform the signal model:
+
+- Tier 1 primary evidence can usually support alerts once the source is validated.
+- Tier 2 professional news may support alerts only when the access path and licence status are clear.
+- Tier 3 aggregator pages should usually be treated as corroboration or context.
+- Tier 4 press wires should stay clearly labelled as company-authored or promotional when relevant.
+- Tier 5 social/forum sources should remain discovery-only until confirmed by primary evidence.
+
 ## Rules For Rejecting JS-Rendered Or Inaccessible Sources
 
 Reject or downgrade a source when:

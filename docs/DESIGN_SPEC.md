@@ -131,6 +131,22 @@ When surfacing evidence from alerts or announcements:
 - Missing evidence must be shown as `Evidence unavailable` or `External source unavailable`.
 - Internal evidence pages should show the raw announcement, scoring context, and decision-support warning in a readable card layout.
 
+### Source candidate and signal screens
+
+The `/sources` and `/sources/[id]` screens should show:
+
+- source tier
+- licence status
+- access method
+- weighting multiplier
+- whether the source can create alerts
+- whether primary confirmation is required
+- latest diagnostic summary and recommendation
+
+The UI should make discovery-only social/forum sources visibly different from primary evidence sources without hiding them completely.
+
+The `/intelligence/[id]` screen should surface signal type, tier, licence status, rumour/pump-risk flags, and primary confirmation state so users can judge source reliability before reading the summary.
+
 ### Trade journal screen
 
 Emphasis:
@@ -192,6 +208,7 @@ Card guidance:
 - Use sufficient contrast in both light and dark surfaces.
 - Support keyboard navigation on desktop and readable touch targets on mobile.
 - Evidence state labels must be textual as well as visual: `Open source`, `View evidence`, `View demo evidence`, and `Evidence unavailable`.
+- Discovery-only signals must show a textual warning such as `Discovery signal only — primary evidence required before acting.`
 
 ## Tone of interface copy
 

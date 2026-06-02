@@ -10,6 +10,10 @@ import {
   type AnnouncementRiskLevel,
 } from "./scoring/announcement-impact";
 import {
+  buildSignalContext,
+  getSourceTierLabel,
+} from "./signals/source-signal-model";
+import {
   getEvidenceLinkMode,
   isMockEvidenceUrl,
   isValidExternalEvidenceUrl,
@@ -125,6 +129,23 @@ export type OpportunityAlertFilterTag =
   | "Long-term"
   | "Swing trades";
 
+export type SignalModelView = {
+  signalType: string;
+  sourceTier: number;
+  sourceTierLabel: string;
+  sourceLicenceStatus: string;
+  sourceAccessMethod: string;
+  weightingMultiplier: number;
+  canCreateAlerts: boolean;
+  requiresPrimaryConfirmation: boolean;
+  primaryConfirmationRequired: boolean;
+  confirmedByPrimarySource: boolean;
+  rumourFlag: boolean;
+  pumpRiskFlag: boolean;
+  discoveryOnly: boolean;
+  signalWeightingExplanation: string;
+};
+
 export type OpportunityScanViewModel = {
   id: string;
   label: "Morning Scan" | "Evening Scan" | "Manual Scan";
@@ -183,6 +204,8 @@ export type OpportunityAlertViewModel = {
   evidencePlaceholders: string[];
   filterTags: OpportunityAlertFilterTag[];
   scan: "Morning" | "Evening" | "Manual";
+  containsDiscoverySignals: boolean;
+  discoverySignalWarning: string | null;
 };
 
 export type OpportunityAlertEvidenceViewModel = {
@@ -192,7 +215,7 @@ export type OpportunityAlertEvidenceViewModel = {
   intelligenceItemId: string | null;
   evidenceType: string | null;
   isPrimary: boolean;
-};
+} & Partial<SignalModelView>;
 
 export type IntelligenceSourceViewModel = {
   id: string;
@@ -202,7 +225,7 @@ export type IntelligenceSourceViewModel = {
   confidenceScore: number;
   isActive: boolean;
   notes: string;
-};
+} & SignalModelView;
 
 export type SourceCandidateViewModel = {
   id: string;
@@ -227,7 +250,7 @@ export type SourceCandidateViewModel = {
   validatedAt: string;
   rejectedAt: string;
   notes: string;
-};
+} & SignalModelView;
 
 export type SourceDiagnosticViewModel = {
   id: string;
@@ -296,7 +319,7 @@ export type IntelligenceDetailViewModel = {
     priority: string;
     reviewBy: string;
   }>;
-};
+} & SignalModelView;
 
 export type IntelligenceEvidenceViewModel = {
   id: string;
@@ -308,7 +331,7 @@ export type IntelligenceEvidenceViewModel = {
   isPrimary: boolean;
   linkMode: "external" | "internal" | "unavailable";
   linkLabel: string;
-};
+} & Partial<SignalModelView>;
 
 export type OpportunityAlertFeed = {
   scans: OpportunityScanViewModel[];
@@ -339,7 +362,7 @@ export type RecentIntelligenceViewModel = {
   scoringReason: string;
   publishedAt: string;
   riskLabel: "Core" | "Watch" | "Speculative" | "Urgent";
-};
+} & Partial<SignalModelView>;
 
 export type SettingsViewModel = {
   decisionSupportOnly: boolean;
@@ -431,6 +454,50 @@ function formatConfidenceLabel(score: number | null | undefined) {
   if (score >= 65) return "Medium";
   if (score >= 45) return "Low-medium";
   return "Low";
+}
+
+function buildSignalView(
+  source: Parameters<typeof buildSignalContext>[0] | null | undefined,
+  item: Parameters<typeof buildSignalContext>[1] | null | undefined,
+): SignalModelView {
+  const signal = buildSignalContext(source, item);
+
+  return {
+    signalType: signal.signalType,
+    sourceTier: signal.sourceTier,
+    sourceTierLabel: getSourceTierLabel(signal.sourceTier),
+    sourceLicenceStatus: signal.licenceStatus,
+    sourceAccessMethod: signal.accessMethod,
+    weightingMultiplier: signal.weightingMultiplier,
+    canCreateAlerts: signal.canCreateAlerts,
+    requiresPrimaryConfirmation: signal.requiresPrimaryConfirmation,
+    primaryConfirmationRequired: signal.primaryConfirmationRequired,
+    confirmedByPrimarySource: signal.confirmedByPrimarySource,
+    rumourFlag: signal.rumourFlag,
+    pumpRiskFlag: signal.pumpRiskFlag,
+    discoveryOnly: signal.discoveryOnly,
+    signalWeightingExplanation: signal.signalWeightingExplanation,
+  };
+}
+
+function getDiscoverySignalWarning(signal: Partial<SignalModelView> | null | undefined) {
+  if (!signal) {
+    return null;
+  }
+
+  if (signal.pumpRiskFlag) {
+    return "Contains pump-risk language. Lower confidence until primary evidence verifies the claim.";
+  }
+
+  if (signal.rumourFlag) {
+    return "Contains rumour language. Verify against primary evidence before acting.";
+  }
+
+  if (signal.discoveryOnly && !signal.confirmedByPrimarySource) {
+    return "Discovery signal only — primary evidence required before acting.";
+  }
+
+  return null;
 }
 
 function formatOpportunityType(
@@ -554,10 +621,99 @@ function formatSuggestedPositionRange(
 }
 
 function getMockOpportunityAlertFeed(): OpportunityAlertFeed {
+  const enrichMockRecentIntelligence = (
+    item: (typeof mockRecentIntelligenceItems)[number],
+  ): RecentIntelligenceViewModel => {
+    const source =
+      mockIntelligenceSources.find((row) => row.name === item.source) ?? null;
+    const signal = buildSignalView(
+      source,
+      {
+        headline: item.headline,
+        summary: item.scoringReason,
+        classification: item.classification,
+        signalType: item.signalType ?? null,
+        sourceTier: item.sourceTier ?? null,
+        weightingMultiplier: item.weightingMultiplier ?? null,
+        primaryConfirmationRequired: item.primaryConfirmationRequired ?? null,
+        confirmedByPrimarySource: item.confirmedByPrimarySource ?? null,
+        rumourFlag: item.rumourFlag ?? null,
+        pumpRiskFlag: item.pumpRiskFlag ?? null,
+      },
+    );
+
+    return {
+      ...item,
+      signalType: item.signalType ?? signal.signalType,
+      sourceTier: item.sourceTier ?? signal.sourceTier,
+      sourceTierLabel: signal.sourceTierLabel,
+      sourceLicenceStatus: item.sourceLicenceStatus ?? signal.sourceLicenceStatus,
+      sourceAccessMethod: item.sourceAccessMethod ?? signal.sourceAccessMethod,
+      weightingMultiplier: item.weightingMultiplier ?? signal.weightingMultiplier,
+      canCreateAlerts: signal.canCreateAlerts,
+      requiresPrimaryConfirmation: signal.requiresPrimaryConfirmation,
+      primaryConfirmationRequired:
+        item.primaryConfirmationRequired ?? signal.primaryConfirmationRequired,
+      confirmedByPrimarySource:
+        item.confirmedByPrimarySource ?? signal.confirmedByPrimarySource,
+      rumourFlag: item.rumourFlag ?? signal.rumourFlag,
+      pumpRiskFlag: item.pumpRiskFlag ?? signal.pumpRiskFlag,
+      discoveryOnly: signal.discoveryOnly,
+      signalWeightingExplanation: signal.signalWeightingExplanation,
+    } as RecentIntelligenceViewModel;
+  };
+
+  const enrichMockAlert = (
+    alert: (typeof mockOpportunityAlerts)[number],
+  ): OpportunityAlertViewModel => {
+    const evidenceItems = alert.evidenceItems.map((item) => {
+      const intelligenceItem = item.intelligenceItemId
+        ? mockIntelligenceItems.find((row) => row.id === item.intelligenceItemId) ?? null
+        : null;
+      const source = intelligenceItem?.sourceId
+        ? mockIntelligenceSources.find((row) => row.id === intelligenceItem.sourceId) ?? null
+        : null;
+      const signal = intelligenceItem ? buildSignalView(source, intelligenceItem) : null;
+
+      return {
+        ...item,
+        ...signal,
+      };
+    });
+
+    const discoverySignals = alert.evidenceItems.some((evidence) => {
+      const intelligenceItem = evidence.intelligenceItemId
+        ? mockIntelligenceItems.find((item) => item.id === evidence.intelligenceItemId)
+        : null;
+      const source = intelligenceItem
+        ? mockIntelligenceSources.find((row) => row.id === intelligenceItem.sourceId)
+        : null;
+      if (!intelligenceItem && !evidence.sourceUrl) {
+        return false;
+      }
+
+      const signal = buildSignalView(source, intelligenceItem);
+      return signal.discoveryOnly || signal.rumourFlag || signal.pumpRiskFlag;
+    });
+
+    return {
+      ...alert,
+      evidenceItems,
+      containsDiscoverySignals: discoverySignals,
+      discoverySignalWarning: getDiscoverySignalWarning(
+        evidenceItems.find((item) => item.discoveryOnly || item.rumourFlag || item.pumpRiskFlag) ??
+          evidenceItems[0] ??
+          null,
+      ) ?? (discoverySignals ? "Contains social/discovery signals. Verify against primary evidence." : null),
+    } as OpportunityAlertViewModel;
+  };
+
   return {
     scans: mockOpportunityScans.map((scan) => ({ ...scan })),
-    alerts: mockOpportunityAlerts.map((alert) => ({ ...alert })),
-    recentIntelligence: mockRecentIntelligenceItems.map((item) => ({ ...item })),
+    alerts: mockOpportunityAlerts.map((alert) => enrichMockAlert(alert)),
+    recentIntelligence: mockRecentIntelligenceItems.map((item) =>
+      enrichMockRecentIntelligence(item),
+    ),
   };
 }
 
@@ -579,6 +735,16 @@ function mapSourceCandidateRow(
   if (!row) {
     return null;
   }
+
+  const signal = buildSignalView(
+    {
+      name: row.name,
+      source_type: "sourceType" in row ? row.sourceType : row.source_type,
+      access_method: "accessMethod" in row ? row.accessMethod : row.access_method,
+      licence_status: null,
+    },
+    null,
+  );
 
   return {
     id: row.id,
@@ -620,6 +786,7 @@ function mapSourceCandidateRow(
       return value ? formatScanTimestamp(value) : "Not rejected";
     })(),
     notes: row.notes ?? "",
+    ...signal,
   };
 }
 
@@ -693,6 +860,7 @@ function getMockIntelligenceItemById(
   const rawAnnouncement = getMockRawAnnouncementById(
     intelligenceItem.rawAnnouncementId,
   );
+  const signal = buildSignalView(source, intelligenceItem);
   const evidenceItems = mockOpportunityAlerts
     .filter((alert) => alert.sourceIntelligenceItemId === intelligenceItem.id)
     .flatMap((alert) =>
@@ -705,6 +873,8 @@ function getMockIntelligenceItemById(
           intelligenceItemId: item.intelligenceItemId,
           evidenceType: item.evidenceType,
           isPrimary: item.isPrimary,
+          signal:
+            item.intelligenceItemId === intelligenceItem.id ? signal : undefined,
         }),
       ),
     );
@@ -753,6 +923,7 @@ function getMockIntelligenceItemById(
         priority: alert.priority,
         reviewBy: formatReviewDate(alert.reviewBy),
       })),
+    ...signal,
   };
 }
 
@@ -781,6 +952,7 @@ function mapIntelligenceEvidenceViewModel({
   intelligenceItemId,
   evidenceType,
   isPrimary,
+  signal,
 }: {
   id: string;
   label: string;
@@ -789,6 +961,7 @@ function mapIntelligenceEvidenceViewModel({
   intelligenceItemId: string | null;
   evidenceType: string | null;
   isPrimary: boolean;
+  signal?: Partial<SignalModelView> | null;
 }): IntelligenceEvidenceViewModel {
   const linkMode = mapEvidenceLinkMode(sourceUrl, intelligenceItemId);
 
@@ -811,6 +984,20 @@ function mapIntelligenceEvidenceViewModel({
               : "View evidence"
             : "Evidence unavailable"
           : "Evidence unavailable",
+    signalType: signal?.signalType,
+    sourceTier: signal?.sourceTier,
+    sourceTierLabel: signal?.sourceTierLabel,
+    sourceLicenceStatus: signal?.sourceLicenceStatus,
+    sourceAccessMethod: signal?.sourceAccessMethod,
+    weightingMultiplier: signal?.weightingMultiplier,
+    canCreateAlerts: signal?.canCreateAlerts,
+    requiresPrimaryConfirmation: signal?.requiresPrimaryConfirmation,
+    primaryConfirmationRequired: signal?.primaryConfirmationRequired,
+    confirmedByPrimarySource: signal?.confirmedByPrimarySource,
+    rumourFlag: signal?.rumourFlag,
+    pumpRiskFlag: signal?.pumpRiskFlag,
+    discoveryOnly: signal?.discoveryOnly,
+    signalWeightingExplanation: signal?.signalWeightingExplanation,
   };
 }
 
@@ -867,6 +1054,8 @@ function mapIntelligenceSourceViewModel(
     return null;
   }
 
+  const signal = buildSignalView(row, null);
+
   return {
     id: row.id,
     name: row.name,
@@ -879,6 +1068,7 @@ function mapIntelligenceSourceViewModel(
         : row.confidence_score,
     isActive: "isActive" in row ? row.isActive : row.is_active,
     notes: row.notes ?? "",
+    ...signal,
   };
 }
 
@@ -1170,6 +1360,7 @@ function mapOpportunityAlertRow(
   row: OpportunityAlertRow,
   evidenceRows: OpportunityEvidenceRow[],
   intelligenceRows: IntelligenceItemRow[],
+  sourceRows: IntelligenceSourceRow[],
   scanRuns: ScanRunRow[],
 ): OpportunityAlertViewModel {
   const priority = formatOpportunityPriority(row.priority);
@@ -1187,19 +1378,29 @@ function mapOpportunityAlertRow(
   });
   const evidenceItems =
     orderedEvidenceRows.length > 0
-      ? orderedEvidenceRows.map((item) => ({
-          label: item.evidence_label,
-          summary: item.evidence_summary ?? "",
-          sourceUrl:
-            item.source_url ??
-            (item.intelligence_item_id
-              ? intelligenceRows.find((row) => row.id === item.intelligence_item_id)
-                  ?.source_url ?? null
-              : null),
-          intelligenceItemId: item.intelligence_item_id ?? null,
-          evidenceType: item.evidence_type,
-          isPrimary: item.is_primary,
-        }))
+      ? orderedEvidenceRows.map((item) => {
+          const intelligenceItem = item.intelligence_item_id
+            ? intelligenceRows.find((row) => row.id === item.intelligence_item_id) ?? null
+            : null;
+          const source = intelligenceItem?.source_id
+            ? sourceRows.find((row) => row.id === intelligenceItem.source_id) ?? null
+            : null;
+          const signal = buildSignalView(source, intelligenceItem);
+
+          return {
+            label: item.evidence_label,
+            summary: item.evidence_summary ?? "",
+            sourceUrl:
+              item.source_url ??
+              (item.intelligence_item_id
+                ? intelligenceItem?.source_url ?? null
+                : null),
+            intelligenceItemId: item.intelligence_item_id ?? null,
+            evidenceType: item.evidence_type,
+            isPrimary: item.is_primary,
+            ...signal,
+          };
+        })
       : sourceIntelligenceItem
         ? [
             {
@@ -1209,11 +1410,25 @@ function mapOpportunityAlertRow(
               intelligenceItemId: sourceIntelligenceItem.id,
               evidenceType: "scored_intelligence",
               isPrimary: true,
+              ...buildSignalView(
+                sourceIntelligenceItem.source_id
+                  ? sourceRows.find((row) => row.id === sourceIntelligenceItem.source_id) ?? null
+                  : null,
+                sourceIntelligenceItem,
+              ),
             },
           ]
         : [];
   const primaryEvidence =
     evidenceItems.find((item) => item.isPrimary) ?? evidenceItems[0] ?? null;
+  const containsDiscoverySignals = evidenceItems.some(
+    (item) => item.discoveryOnly || item.rumourFlag || item.pumpRiskFlag || (item.sourceTier ?? 0) >= 5,
+  );
+  const discoverySignalWarning = getDiscoverySignalWarning(
+    evidenceItems.find((item) => item.discoveryOnly || item.rumourFlag || item.pumpRiskFlag) ??
+      primaryEvidence ??
+      null,
+  );
 
   return {
     id: row.id,
@@ -1260,6 +1475,12 @@ function mapOpportunityAlertRow(
         : scanRun?.scan_type === "evening"
           ? "Evening"
           : "Morning",
+    containsDiscoverySignals,
+    discoverySignalWarning:
+      discoverySignalWarning ??
+      (containsDiscoverySignals
+        ? "Contains social/discovery signals. Verify against primary evidence."
+        : null),
   };
 }
 
@@ -1309,6 +1530,21 @@ function mapRecentIntelligenceRow(
     intelligenceItem?.scoring_reason ??
     deterministicScore.scoringReason ??
     "Review the announcement manually before drawing a conclusion.";
+  const signal = buildSignalView(
+    source,
+    intelligenceItem ?? {
+      headline: rawAnnouncement.headline,
+      summary: rawAnnouncement.raw_category,
+      classification,
+      signalType: deterministicScore.classification,
+      sourceTier: source?.tier ?? null,
+      weightingMultiplier: source?.weighting_multiplier ?? null,
+      primaryConfirmationRequired: source?.requires_primary_confirmation ?? null,
+      confirmedByPrimarySource: false,
+      rumourFlag: false,
+      pumpRiskFlag: false,
+    },
+  );
 
   return {
     id: rawAnnouncement.id,
@@ -1332,6 +1568,7 @@ function mapRecentIntelligenceRow(
       rawAnnouncement.published_at ?? rawAnnouncement.created_at,
     ),
     riskLabel: getRecentIntelligenceRiskLabel(priority, riskLevel),
+    ...signal,
   };
 }
 
@@ -2031,6 +2268,7 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
         row,
         evidenceRows.filter((item) => item.opportunity_alert_id === row.id),
         intelligenceRows,
+        sourceRows,
         scanRows,
       ),
     );
@@ -2419,6 +2657,37 @@ export async function getIntelligenceSourceById(
   return mapIntelligenceSourceViewModel(data as IntelligenceSourceRow);
 }
 
+export async function getIntelligenceSources(): Promise<IntelligenceSourceViewModel[]> {
+  if (!hasSupabaseConfig()) {
+    return mockIntelligenceSources
+      .map((row) => mapIntelligenceSourceViewModel(row))
+      .filter((row): row is IntelligenceSourceViewModel => row !== null);
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return mockIntelligenceSources
+      .map((row) => mapIntelligenceSourceViewModel(row))
+      .filter((row): row is IntelligenceSourceViewModel => row !== null);
+  }
+
+  const { data, error } = await supabase
+    .from("intelligence_sources")
+    .select("*")
+    .order("tier", { ascending: true })
+    .order("name", { ascending: true });
+
+  if (error || !data || data.length === 0) {
+    return mockIntelligenceSources
+      .map((row) => mapIntelligenceSourceViewModel(row))
+      .filter((row): row is IntelligenceSourceViewModel => row !== null);
+  }
+
+  return (data as IntelligenceSourceRow[])
+    .map((row) => mapIntelligenceSourceViewModel(row))
+    .filter((row): row is IntelligenceSourceViewModel => row !== null);
+}
+
 export async function getRawAnnouncementById(
   id: string,
 ): Promise<RawAnnouncementViewModel | null> {
@@ -2469,15 +2738,29 @@ export async function getOpportunityEvidenceForAlert(
     return [];
   }
 
-  const { data } = await supabase
-    .from("opportunity_evidence")
-    .select("*")
-    .eq("opportunity_alert_id", alertId)
-    .order("created_at", { ascending: true });
+  const [evidenceResult, intelligenceResult, sourceResult] = await Promise.all([
+    supabase
+      .from("opportunity_evidence")
+      .select("*")
+      .eq("opportunity_alert_id", alertId)
+      .order("created_at", { ascending: true }),
+    supabase.from("intelligence_items").select("*"),
+    supabase.from("intelligence_sources").select("*"),
+  ]);
 
-  const evidenceRows = (data ?? []) as OpportunityEvidenceRow[];
-  return evidenceRows.map((row) =>
-    mapIntelligenceEvidenceViewModel({
+  const evidenceRows = (evidenceResult.data ?? []) as OpportunityEvidenceRow[];
+  const intelligenceRows = (intelligenceResult.data ?? []) as IntelligenceItemRow[];
+  const sourceRows = (sourceResult.data ?? []) as IntelligenceSourceRow[];
+
+  return evidenceRows.map((row) => {
+    const intelligenceItem = row.intelligence_item_id
+      ? intelligenceRows.find((item) => item.id === row.intelligence_item_id) ?? null
+      : null;
+    const source = intelligenceItem?.source_id
+      ? sourceRows.find((item) => item.id === intelligenceItem.source_id) ?? null
+      : null;
+
+    return mapIntelligenceEvidenceViewModel({
       id: row.id,
       label: row.evidence_label,
       summary: row.evidence_summary ?? "",
@@ -2485,8 +2768,9 @@ export async function getOpportunityEvidenceForAlert(
       intelligenceItemId: row.intelligence_item_id,
       evidenceType: row.evidence_type,
       isPrimary: row.is_primary,
-    }),
-  );
+      signal: intelligenceItem ? buildSignalView(source, intelligenceItem) : null,
+    });
+  });
 }
 
 export async function getIntelligenceItemById(
@@ -2542,6 +2826,7 @@ export async function getIntelligenceItemById(
   const sourceRow = intelligenceRow.source_id
     ? sourceRows.find((source) => source.id === intelligenceRow.source_id) ?? null
     : null;
+  const signal = buildSignalView(sourceRow, intelligenceRow);
   const evidenceRows = (evidenceResult.data ?? []) as OpportunityEvidenceRow[];
   const alertRows = (alertsResult.data ?? []) as OpportunityAlertRow[];
   const deterministicScore = scoreAnnouncementImpact({
@@ -2628,6 +2913,18 @@ export async function getIntelligenceItemById(
         intelligenceItemId: row.intelligence_item_id,
         evidenceType: row.evidence_type,
         isPrimary: row.is_primary,
+        signal: row.intelligence_item_id
+          ? (() => {
+              const linkedItem =
+                row.intelligence_item_id === intelligenceRow.id
+                  ? intelligenceRow
+                  : null;
+              const linkedSource = linkedItem?.source_id
+                ? sourceRows.find((source) => source.id === linkedItem.source_id) ?? null
+                : null;
+              return linkedItem ? buildSignalView(linkedSource, linkedItem) : null;
+            })()
+          : null,
       }),
     ),
     linkedAlerts: alertRows.map((alert) => ({
@@ -2636,5 +2933,6 @@ export async function getIntelligenceItemById(
       priority: formatPriorityLabel(alert.priority),
       reviewBy: alert.review_by ? formatReviewDate(alert.review_by) : "Review manually",
     })),
+    ...signal,
   };
 }
