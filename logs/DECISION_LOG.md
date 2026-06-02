@@ -127,3 +127,16 @@ Impact:
 - The ingestion path now handles existing duplicate rows more safely by reusing the oldest match.
 - Database-level protection is extended for raw-announcement source URLs and supporting lookup indexes.
 - Duplicate inspection remains manual and non-destructive.
+
+## 2026-06-02 - Deterministic announcement impact scoring
+
+Decision: Score RNS-derived announcement intelligence with deterministic rules before introducing any AI API summarisation or market-data enrichment.
+
+Reason: The platform needs explainable, review-only classification and priority signals based on stored evidence, without pretending to predictive certainty or handing decision authority to AI.
+
+Impact:
+
+- Announcement scoring remains evidence-based and manually reviewable.
+- `intelligence_items` now carry classification, impact direction, impact score, risk level, priority, scoring reason, and scoring timestamp fields.
+- Re-running the scoring pass should be idempotent and should only add `score_history` rows when the effective scored state changes.
+- Speculative mining/resource updates and going-concern style warnings keep explicit higher-risk framing.

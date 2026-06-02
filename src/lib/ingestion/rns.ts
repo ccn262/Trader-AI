@@ -423,12 +423,18 @@ export function mapRawAnnouncementToIntelligenceItem(
     asset_symbol: announcement.assetSymbol ?? null,
     headline: announcement.headline,
     summary: buildRnsIntelligenceSummary(announcement, announcementType),
+    classification: null,
+    impact_direction: null,
     item_type: mapAnnouncementTypeToIntelligenceItemType(announcementType),
     source_url: announcement.sourceUrl ?? null,
     published_at: announcement.publishedAt ?? null,
     source_confidence: getRnsSourceConfidence(),
     verification_status: getRnsVerificationStatus(announcementType),
     impact_score: estimateRnsImpactScore(announcementType, announcement.headline),
+    risk_level: null,
+    priority: null,
+    scoring_reason: null,
+    scored_at: null,
   } satisfies Omit<IntelligenceItemRow, "id" | "created_at">;
 }
 

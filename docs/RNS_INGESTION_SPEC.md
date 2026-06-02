@@ -181,6 +181,26 @@ Recommended flow:
 5. Assign base source confidence.
 6. Assign a placeholder impact score.
 7. Set verification status based on source quality and parse completeness.
+8. Pass the normalized item through deterministic announcement-impact scoring before any later alert-generation workflow.
+
+## Deterministic Scoring Handoff
+
+RNS ingestion and announcement scoring are separate steps on purpose.
+
+Flow:
+
+1. Preserve the raw announcement.
+2. Create or reuse the linked `intelligence_items` row.
+3. Run deterministic scoring against the normalized announcement type, headline, category, and summary.
+4. Write classification, impact direction, impact score, risk level, priority, scoring reason, and `scored_at`.
+5. Record score-history changes only when the effective scored output changes.
+
+Rules:
+
+- Scoring remains evidence-based and review-only.
+- Scoring must be idempotent when the same RNS item is processed more than once.
+- `score_history` should not be polluted with duplicate entries for the same unchanged scored state.
+- If scoring fields are unavailable in the database yet, apply the Phase 8 migration before running the scorer.
 
 Expected mapping examples:
 

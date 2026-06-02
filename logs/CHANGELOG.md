@@ -30,3 +30,7 @@
 - Tightened RNS mock-ingestion deduplication across `scripts/ingest-rns-mock.mjs` and `src/lib/ingestion/rns.ts` using `external_id`, `source_url`, and `asset_symbol + headline + published_at`.
 - Added `supabase/migrations/20260606_fix_rns_deduplication.sql` with database-side duplicate protection for raw announcements and supporting lookup indexes.
 - Updated `docs/RNS_INGESTION_SPEC.md` with explicit deduplication rules and read-only SQL snippets for duplicate inspection.
+- Added `docs/IMPACT_SCORING_SPEC.md` and Phase 8 deterministic announcement scoring rules for RNS-derived intelligence.
+- Added `supabase/migrations/20260607_phase8_impact_scoring.sql` for announcement classification, direction, risk, priority, scoring reason, and scoring timestamp fields.
+- Added a deterministic RNS impact-scoring module and `npm run score:rns:impact` for idempotent server-side scoring plus controlled `score_history` writes.
+- Updated `/alerts` recent intelligence output and mock fallback data to expose classification, impact direction, risk level, priority, and scoring reason as read-only evidence.
