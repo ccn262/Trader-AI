@@ -49,8 +49,30 @@ export type RnsIngestionResult = {
 
 const RNS_SOURCE_ID = "3dbfbf7f-ae35-48a4-a9fd-3d1de09a6fd9";
 
+type RnsLookupRow = {
+  id: string;
+  created_at?: string | null;
+};
+
 function includesAny(value: string, fragments: string[]) {
   return fragments.some((fragment) => value.includes(fragment));
+}
+
+function normalizeLookupValue(value?: string | null) {
+  const normalized = value?.trim() ?? "";
+  return normalized.length ? normalized : null;
+}
+
+function selectOldestMatch<T extends RnsLookupRow>(rows: T[] | null | undefined) {
+  if (!rows?.length) {
+    return null;
+  }
+
+  return [...rows].sort((left, right) => {
+    const leftTime = left.created_at ? new Date(left.created_at).getTime() : 0;
+    const rightTime = right.created_at ? new Date(right.created_at).getTime() : 0;
+    return leftTime - rightTime;
+  })[0];
 }
 
 export function normaliseAnnouncementType(
@@ -263,50 +285,66 @@ async function findExistingRawAnnouncement(
     return null;
   }
 
-  if (announcement.externalId) {
+  const externalId = normalizeLookupValue(announcement.externalId);
+  if (externalId) {
     const { data } = await supabase
       .from("raw_announcements")
       .select("*")
       .eq("source_id", sourceId)
-      .eq("external_id", announcement.externalId)
-      .maybeSingle();
+      .eq("external_id", externalId)
+      .order("created_at", { ascending: true })
+      .limit(5);
 
-    if (data) {
-      return data as RawAnnouncementRow;
+    const match = selectOldestMatch(data as RawAnnouncementRow[] | null | undefined);
+    if (match) {
+      return match;
     }
   }
 
-  if (announcement.sourceUrl) {
+  const sourceUrl = normalizeLookupValue(announcement.sourceUrl);
+  if (sourceUrl) {
     const { data } = await supabase
       .from("raw_announcements")
       .select("*")
       .eq("source_id", sourceId)
-      .eq("source_url", announcement.sourceUrl)
-      .maybeSingle();
+      .eq("source_url", sourceUrl)
+      .order("created_at", { ascending: true })
+      .limit(5);
 
-    if (data) {
-      return data as RawAnnouncementRow;
+    const match = selectOldestMatch(data as RawAnnouncementRow[] | null | undefined);
+    if (match) {
+      return match;
     }
   }
 
-  if (announcement.publishedAt) {
+  const assetSymbol = normalizeLookupValue(announcement.assetSymbol);
+  const headline = normalizeLookupValue(announcement.headline);
+  const publishedAt = normalizeLookupValue(announcement.publishedAt);
+  if (assetSymbol && headline && publishedAt) {
     const { data } = await supabase
       .from("raw_announcements")
       .select("*")
       .eq("source_id", sourceId)
-      .eq("headline", announcement.headline)
-      .eq("published_at", announcement.publishedAt)
-      .maybeSingle();
+      .eq("asset_symbol", assetSymbol)
+      .eq("headline", headline)
+      .eq("published_at", publishedAt)
+      .order("created_at", { ascending: true })
+      .limit(5);
 
-    if (data) {
-      return data as RawAnnouncementRow;
+    const match = selectOldestMatch(data as RawAnnouncementRow[] | null | undefined);
+    if (match) {
+      return match;
     }
   }
 
   return null;
 }
 
-async function findExistingIntelligenceItem(rawAnnouncementId: string) {
+async function findExistingIntelligenceItem(
+  rawAnnouncementId: string,
+  sourceId?: string | null,
+  announcement?: RnsRawAnnouncementInput,
+) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = getSupabaseClient() as any;
 
@@ -318,9 +356,53 @@ async function findExistingIntelligenceItem(rawAnnouncementId: string) {
     .from("intelligence_items")
     .select("*")
     .eq("raw_announcement_id", rawAnnouncementId)
-    .maybeSingle();
+    .order("created_at", { ascending: true })
+    .limit(5);
 
-  return (data as IntelligenceItemRow | null) ?? null;
+  const directMatch = selectOldestMatch(
+    data as IntelligenceItemRow[] | null | undefined,
+  );
+  if (directMatch) {
+    return directMatch;
+  }
+
+  if (sourceId && announcement?.sourceUrl) {
+    const { data: sourceUrlMatches } = await supabase
+      .from("intelligence_items")
+      .select("*")
+      .eq("source_id", sourceId)
+      .eq("source_url", announcement.sourceUrl)
+      .order("created_at", { ascending: true })
+      .limit(5);
+
+    const sourceUrlMatch = selectOldestMatch(
+      sourceUrlMatches as IntelligenceItemRow[] | null | undefined,
+    );
+    if (sourceUrlMatch) {
+      return sourceUrlMatch;
+    }
+  }
+
+  if (sourceId && announcement?.assetSymbol && announcement?.headline && announcement?.publishedAt) {
+    const { data: compoundMatches } = await supabase
+      .from("intelligence_items")
+      .select("*")
+      .eq("source_id", sourceId)
+      .eq("asset_symbol", announcement.assetSymbol)
+      .eq("headline", announcement.headline)
+      .eq("published_at", announcement.publishedAt)
+      .order("created_at", { ascending: true })
+      .limit(5);
+
+    const compoundMatch = selectOldestMatch(
+      compoundMatches as IntelligenceItemRow[] | null | undefined,
+    );
+    if (compoundMatch) {
+      return compoundMatch;
+    }
+  }
+
+  return null;
 }
 
 export function mapRawAnnouncementToIntelligenceItem(
@@ -395,7 +477,11 @@ export async function ingestRnsAnnouncements(
     try {
       const duplicate = await findExistingRawAnnouncement(source.id, announcement);
       if (duplicate) {
-        const existingItem = await findExistingIntelligenceItem(duplicate.id);
+        const existingItem = await findExistingIntelligenceItem(
+          duplicate.id,
+          source.id,
+          announcement,
+        );
         if (existingItem) {
           result.duplicatesSkipped += 1;
           continue;
@@ -439,7 +525,11 @@ export async function ingestRnsAnnouncements(
         result.insertedRawAnnouncements += 1;
       }
 
-      const existingItem = await findExistingIntelligenceItem(rawInsert.id);
+      const existingItem = await findExistingIntelligenceItem(
+        rawInsert.id,
+        source.id,
+        announcement,
+      );
       if (existingItem) {
         result.duplicatesSkipped += 1;
         continue;

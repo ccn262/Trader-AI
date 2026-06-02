@@ -114,3 +114,16 @@ Impact:
 - Deduplication is based on external id, source URL, or headline plus timestamp.
 - Speculative mining/resource and fundraising announcements keep explicit higher-risk framing.
 - No automated scheduler, broker behavior, or AI calls are introduced in this phase.
+
+## 2026-06-02 - RNS deduplication hygiene
+
+Decision: Tighten RNS ingestion deduplication so both the manual mock script and the server-side ingestion helper reuse existing rows by `external_id`, `source_url`, or `asset_symbol + headline + published_at`.
+
+Reason: Re-running mock ingestion in a seeded environment can create duplicate-looking evidence if deduplication relies on only one identifier or assumes a single matching row already exists.
+
+Impact:
+
+- Re-running `npm run ingest:rns:mock` should be idempotent.
+- The ingestion path now handles existing duplicate rows more safely by reusing the oldest match.
+- Database-level protection is extended for raw-announcement source URLs and supporting lookup indexes.
+- Duplicate inspection remains manual and non-destructive.

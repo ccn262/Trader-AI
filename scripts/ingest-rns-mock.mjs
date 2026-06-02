@@ -1,4 +1,9 @@
+import { resolve } from "node:path"
+
 import { createClient } from "@supabase/supabase-js"
+import dotenv from "dotenv"
+
+dotenv.config({ path: resolve(process.cwd(), ".env.local"), quiet: true })
 
 const sourceId = "3dbfbf7f-ae35-48a4-a9fd-3d1de09a6fd9"
 const scanRunId = "1b7f5fb7-8e69-4ccd-a8e7-9d0242052601"
@@ -10,12 +15,24 @@ const url =
 
 const key =
   process.env.SUPABASE_SERVICE_ROLE_KEY ??
-  process.env.SUPABASE_ANON_KEY ??
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  null
 
 if (!url || !key) {
+  const missing = []
+
+  if (!url) {
+    missing.push("SUPABASE_URL")
+  }
+
+  if (!key) {
+    missing.push("SUPABASE_SERVICE_ROLE_KEY")
+  }
+
+  console.error("Missing required Supabase environment variables for mock RNS ingestion.")
+  console.error(`Checked project root .env.local at ${resolve(process.cwd(), ".env.local")}.`)
+  console.error(`Still missing: ${missing.join(", ")}.`)
   console.error(
-    "Missing Supabase environment variables. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before running mock ingestion.",
+    "Add the missing values to .env.local or export them in the shell before running `npm run ingest:rns:mock`.",
   )
   process.exit(1)
 }
@@ -113,6 +130,132 @@ const announcements = [
     },
   },
 ]
+
+function normalizeLookupValue(value) {
+  const normalized = value?.trim?.() ?? ""
+  return normalized.length ? normalized : null
+}
+
+function selectOldestMatch(rows) {
+  if (!rows?.length) {
+    return null
+  }
+
+  return [...rows].sort((left, right) => {
+    const leftTime = left.created_at ? new Date(left.created_at).getTime() : 0
+    const rightTime = right.created_at ? new Date(right.created_at).getTime() : 0
+    return leftTime - rightTime
+  })[0]
+}
+
+async function findExistingRawAnnouncement(announcement) {
+  const externalId = normalizeLookupValue(announcement.externalId)
+  if (externalId) {
+    const { data } = await supabase
+      .from("raw_announcements")
+      .select("id, created_at")
+      .eq("source_id", sourceId)
+      .eq("external_id", externalId)
+      .order("created_at", { ascending: true })
+      .limit(5)
+
+    const match = selectOldestMatch(data)
+    if (match) {
+      return match
+    }
+  }
+
+  const sourceUrl = normalizeLookupValue(announcement.sourceUrl)
+  if (sourceUrl) {
+    const { data } = await supabase
+      .from("raw_announcements")
+      .select("id, created_at")
+      .eq("source_id", sourceId)
+      .eq("source_url", sourceUrl)
+      .order("created_at", { ascending: true })
+      .limit(5)
+
+    const match = selectOldestMatch(data)
+    if (match) {
+      return match
+    }
+  }
+
+  const assetSymbol = normalizeLookupValue(announcement.assetSymbol)
+  const headline = normalizeLookupValue(announcement.headline)
+  const publishedAt = normalizeLookupValue(announcement.publishedAt)
+
+  if (assetSymbol && headline && publishedAt) {
+    const { data } = await supabase
+      .from("raw_announcements")
+      .select("id, created_at")
+      .eq("source_id", sourceId)
+      .eq("asset_symbol", assetSymbol)
+      .eq("headline", headline)
+      .eq("published_at", publishedAt)
+      .order("created_at", { ascending: true })
+      .limit(5)
+
+    const match = selectOldestMatch(data)
+    if (match) {
+      return match
+    }
+  }
+
+  return null
+}
+
+async function findExistingIntelligenceItem(rawAnnouncementId, announcement) {
+  const { data: rawMatches } = await supabase
+    .from("intelligence_items")
+    .select("id, created_at")
+    .eq("raw_announcement_id", rawAnnouncementId)
+    .order("created_at", { ascending: true })
+    .limit(5)
+
+  const directMatch = selectOldestMatch(rawMatches)
+  if (directMatch) {
+    return directMatch
+  }
+
+  const sourceUrl = normalizeLookupValue(announcement.sourceUrl)
+  if (sourceUrl) {
+    const { data: sourceUrlMatches } = await supabase
+      .from("intelligence_items")
+      .select("id, created_at")
+      .eq("source_id", sourceId)
+      .eq("source_url", sourceUrl)
+      .order("created_at", { ascending: true })
+      .limit(5)
+
+    const sourceUrlMatch = selectOldestMatch(sourceUrlMatches)
+    if (sourceUrlMatch) {
+      return sourceUrlMatch
+    }
+  }
+
+  const assetSymbol = normalizeLookupValue(announcement.assetSymbol)
+  const headline = normalizeLookupValue(announcement.headline)
+  const publishedAt = normalizeLookupValue(announcement.publishedAt)
+  if (assetSymbol && headline && publishedAt) {
+    const { data: compoundMatches } = await supabase
+      .from("intelligence_items")
+      .select("id, created_at")
+      .eq("source_id", sourceId)
+      .eq("asset_symbol", assetSymbol)
+      .eq("headline", headline)
+      .eq("published_at", publishedAt)
+      .order("created_at", { ascending: true })
+      .limit(5)
+
+    const compoundMatch = selectOldestMatch(compoundMatches)
+    if (compoundMatch) {
+      return compoundMatch
+    }
+  }
+
+  return null
+}
 
 function normaliseAnnouncementType(headline, rawCategory) {
   const normalized = `${headline} ${rawCategory ?? ""}`.toLowerCase()
@@ -224,12 +367,7 @@ let insertedItems = 0
 let duplicates = 0
 
 for (const announcement of announcements) {
-  const { data: existingRaw } = await supabase
-    .from("raw_announcements")
-    .select("id")
-    .eq("source_id", sourceId)
-    .eq("external_id", announcement.externalId)
-    .maybeSingle()
+  const existingRaw = await findExistingRawAnnouncement(announcement)
 
   const announcementType = normaliseAnnouncementType(
     announcement.headline,
@@ -241,19 +379,21 @@ for (const announcement of announcements) {
   if (!rawId) {
     const { data: inserted, error } = await supabase
       .from("raw_announcements")
-      .insert({
-        source_id: sourceId,
-        external_id: announcement.externalId,
-        asset_symbol: announcement.assetSymbol,
-        company_name: announcement.companyName,
-        headline: announcement.headline,
-        announcement_type: announcementType,
-        raw_category: announcement.rawCategory,
-        source_url: announcement.sourceUrl,
-        published_at: announcement.publishedAt,
-        raw_payload: announcement.rawPayload,
-        ingestion_status: "parsed",
-      })
+      .insert([
+        {
+          source_id: sourceId,
+          external_id: announcement.externalId,
+          asset_symbol: announcement.assetSymbol,
+          company_name: announcement.companyName,
+          headline: announcement.headline,
+          announcement_type: announcementType,
+          raw_category: announcement.rawCategory,
+          source_url: announcement.sourceUrl,
+          published_at: announcement.publishedAt,
+          raw_payload: announcement.rawPayload,
+          ingestion_status: "parsed",
+        },
+      ])
       .select("id")
       .single()
 
@@ -267,31 +407,29 @@ for (const announcement of announcements) {
     insertedRaw += 1
   }
 
-  const { data: existingItem } = await supabase
-    .from("intelligence_items")
-    .select("id")
-    .eq("raw_announcement_id", rawId)
-    .maybeSingle()
+  const existingItem = await findExistingIntelligenceItem(rawId, announcement)
 
   if (existingItem) {
     duplicates += 1
     continue
   }
 
-  const { error: itemError } = await supabase.from("intelligence_items").insert({
-    scan_run_id: scanRunId,
-    source_id: sourceId,
-    raw_announcement_id: rawId,
-    asset_symbol: announcement.assetSymbol,
-    headline: announcement.headline,
-    summary: summaryFor(announcement.companyName, announcementType),
-    item_type: itemType(announcementType),
-    source_url: announcement.sourceUrl,
-    published_at: announcement.publishedAt,
-    source_confidence: 95,
-    verification_status: verificationStatus(announcementType),
-    impact_score: impactScore(announcementType),
-  })
+  const { error: itemError } = await supabase.from("intelligence_items").insert([
+    {
+      scan_run_id: scanRunId,
+      source_id: sourceId,
+      raw_announcement_id: rawId,
+      asset_symbol: announcement.assetSymbol,
+      headline: announcement.headline,
+      summary: summaryFor(announcement.companyName, announcementType),
+      item_type: itemType(announcementType),
+      source_url: announcement.sourceUrl,
+      published_at: announcement.publishedAt,
+      source_confidence: 95,
+      verification_status: verificationStatus(announcementType),
+      impact_score: impactScore(announcementType),
+    },
+  ])
 
   if (itemError) {
     console.error(`Failed to insert intelligence item: ${announcement.headline}`)

@@ -73,10 +73,102 @@ Verification rules:
 1. Confirm the item came from the configured RNS/company-announcement source.
 2. Preserve the original headline, URL, timestamp, and raw payload.
 3. Normalize the company name, symbol, and announcement type.
-4. Check for duplicates using external id, source URL, or headline plus timestamp.
+4. Check for duplicates using external id, source URL, or the fallback compound key `asset_symbol + headline + published_at`.
 5. Mark parsing failures explicitly rather than inventing structured fields.
 6. Treat financing, going-concern, and speculative mining/resource announcements as higher-risk even when the source is official.
 7. Do not turn a single official announcement into a recommendation.
+
+## Deduplication Rules
+
+Deduplication should happen before inserting either `raw_announcements` or `intelligence_items`.
+
+Deduplication order:
+
+1. `external_id` when available
+2. `source_url` when available
+3. Fallback compound key:
+   `asset_symbol + headline + published_at`
+
+Implementation rules:
+
+- Prefer reusing the oldest matching raw announcement instead of creating another row.
+- Prefer reusing the oldest matching intelligence item instead of inserting another one.
+- If a duplicate already exists in storage, skip insertion and count the announcement as skipped rather than failing the whole run.
+- Do not auto-delete live rows during ingestion.
+
+Database protection:
+
+- Unique index on `source_id + external_id` when `external_id` is not null
+- Unique index on `source_id + source_url` when `source_url` is not null
+- Lookup index on `source_id + asset_symbol + headline + published_at` for fallback matching
+
+## Duplicate Inspection SQL
+
+Use these read-only queries to identify duplicate-looking RNS rows before any manual cleanup decision.
+
+Raw announcements by external id:
+
+```sql
+select
+  source_id,
+  external_id,
+  count(*) as duplicate_count
+from public.raw_announcements
+where external_id is not null
+group by source_id, external_id
+having count(*) > 1
+order by duplicate_count desc, external_id;
+```
+
+Raw announcements by source URL:
+
+```sql
+select
+  source_id,
+  source_url,
+  count(*) as duplicate_count
+from public.raw_announcements
+where source_url is not null
+group by source_id, source_url
+having count(*) > 1
+order by duplicate_count desc, source_url;
+```
+
+Raw announcements by fallback compound key:
+
+```sql
+select
+  source_id,
+  asset_symbol,
+  headline,
+  published_at,
+  count(*) as duplicate_count
+from public.raw_announcements
+where asset_symbol is not null
+  and published_at is not null
+group by source_id, asset_symbol, headline, published_at
+having count(*) > 1
+order by duplicate_count desc, published_at desc;
+```
+
+Intelligence items linked to more than one raw announcement pattern:
+
+```sql
+select
+  source_id,
+  asset_symbol,
+  headline,
+  published_at,
+  count(*) as duplicate_count
+from public.intelligence_items
+where asset_symbol is not null
+  and published_at is not null
+group by source_id, asset_symbol, headline, published_at
+having count(*) > 1
+order by duplicate_count desc, published_at desc;
+```
+
+These queries are inspection-only. Cleanup should be a deliberate manual action.
 
 ## How Announcements Become `intelligence_items`
 

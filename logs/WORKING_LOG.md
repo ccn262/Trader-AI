@@ -24,12 +24,14 @@ Use this file to keep Codex and future sessions aligned.
 - `/alerts` now reads from a Supabase-first opportunity-alert feed with mock fallback when env vars are missing and safe empty states when the tables contain no rows.
 - Phase 7 RNS/company-announcement ingestion foundation is being added with raw announcement storage, RNS source seeding, a server-side ingestion module, and a manual mock ingestion script.
 - `/alerts` now has a small read-only recent-intelligence section for RNS-derived evidence, including source confidence, verification status, and impact placeholders.
+- RNS mock ingestion deduplication has been tightened so repeated runs reuse existing rows using `external_id`, `source_url`, or `asset_symbol + headline + published_at`.
+- A follow-up migration now adds stronger raw-announcement duplicate protection and lookup indexes without deleting existing live data automatically.
 
 ## Next recommended action
 
-1. Apply `supabase/migrations/20260605_phase7_rns_ingestion.sql` in Supabase after the earlier migrations.
-2. Run `npm run ingest:rns:mock` in a configured environment if you want to test manual RNS-style ingestion locally.
-3. Review how future scan runs should consume `raw_announcements` and `intelligence_items` before enabling any scheduled ingestion.
+1. Apply `supabase/migrations/20260606_fix_rns_deduplication.sql` after the Phase 7 migration.
+2. Run `npm run ingest:rns:mock` twice in a configured environment and confirm the second run only skips duplicates.
+3. Use the duplicate-inspection SQL in `docs/RNS_INGESTION_SPEC.md` before any manual cleanup in shared environments.
 
 ## Codex starter instruction
 
