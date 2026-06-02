@@ -89,6 +89,21 @@ export type OpportunityAlert = {
   scan: "Morning" | "Evening";
 };
 
+export type RecentIntelligenceItem = {
+  id: string;
+  assetSymbol: string;
+  companyName: string;
+  headline: string;
+  announcementType: string;
+  source: string;
+  sourceConfidence: string;
+  sourceConfidenceScore: number;
+  verificationStatus: "Verified" | "Partially verified" | "Unverified" | "Failed";
+  impactScore: number;
+  publishedAt: string;
+  riskLabel: "Core" | "Watch" | "Speculative" | "Urgent";
+};
+
 export const summaryCards = [
   {
     label: "Portfolio value",
@@ -514,6 +529,93 @@ export const opportunityAlerts: OpportunityAlert[] = [
     ],
     filterTags: ["Penny shares", "Watch today"],
     scan: "Morning",
+  },
+] as const;
+
+export const recentIntelligenceItems: RecentIntelligenceItem[] = [
+  {
+    id: "rns-mock-final-results-rr",
+    assetSymbol: "RR.L",
+    companyName: "Rolls-Royce Holdings plc",
+    headline: "Final results show improving cash generation and order visibility",
+    announcementType: "Final results",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Verified",
+    impactScore: 82,
+    publishedAt: "2026-06-02T07:05:00Z",
+    riskLabel: "Watch",
+  },
+  {
+    id: "rns-mock-trading-update-itm",
+    assetSymbol: "ITM.L",
+    companyName: "ITM Power plc",
+    headline: "Trading update highlights slower conversion and revised expectations",
+    announcementType: "Trading update",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Verified",
+    impactScore: 74,
+    publishedAt: "2026-06-02T07:12:00Z",
+    riskLabel: "Urgent",
+  },
+  {
+    id: "rns-mock-director-dealing-barc",
+    assetSymbol: "BARC.L",
+    companyName: "Barclays plc",
+    headline: "Director dealing discloses a modest open-market purchase",
+    announcementType: "Director dealings",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Verified",
+    impactScore: 38,
+    publishedAt: "2026-06-02T07:18:00Z",
+    riskLabel: "Core",
+  },
+  {
+    id: "rns-mock-drill-solg",
+    assetSymbol: "SOLG",
+    companyName: "SolGold plc",
+    headline: "Drill results report additional mineralisation in a follow-up update",
+    announcementType: "Drill results",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Partially verified",
+    impactScore: 67,
+    publishedAt: "2026-06-02T07:25:00Z",
+    riskLabel: "Speculative",
+  },
+  {
+    id: "rns-mock-placing-aal",
+    assetSymbol: "AAL.L",
+    companyName: "Anglesey Mining plc",
+    headline: "Placing and fundraising announced to support ongoing project work",
+    announcementType: "Placing/fundraising",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Verified",
+    impactScore: 71,
+    publishedAt: "2026-06-02T07:31:00Z",
+    riskLabel: "Speculative",
+  },
+  {
+    id: "rns-mock-going-concern-xyz",
+    assetSymbol: "XYZ.L",
+    companyName: "Example Resources plc",
+    headline: "Going concern warning issued alongside financing uncertainty",
+    announcementType: "Going concern warning",
+    source: "London Stock Exchange RNS",
+    sourceConfidence: "High",
+    sourceConfidenceScore: 95,
+    verificationStatus: "Verified",
+    impactScore: 92,
+    publishedAt: "2026-06-02T07:42:00Z",
+    riskLabel: "Urgent",
   },
 ] as const;
 

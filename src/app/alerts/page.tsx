@@ -12,6 +12,7 @@ import {
   getOpportunityAlertFeed,
   type OpportunityAlertFilterTag,
   type OpportunityAlertViewModel,
+  type RecentIntelligenceViewModel,
 } from "@/lib/data";
 
 const filterOptions: Array<{
@@ -52,6 +53,13 @@ function getAlertTone(alert: OpportunityAlertViewModel) {
   if (alert.priority === "Monitor only") return "core" as const;
   if (alert.priority === "Speculative review") return "speculative" as const;
   return "watch" as const;
+}
+
+function getIntelligenceTone(item: RecentIntelligenceViewModel) {
+  if (item.riskLabel === "Urgent") return "urgent" as const;
+  if (item.riskLabel === "Speculative") return "speculative" as const;
+  if (item.riskLabel === "Watch") return "watch" as const;
+  return "core" as const;
 }
 
 export default async function AlertsPage({
@@ -330,6 +338,97 @@ export default async function AlertsPage({
               <p className="mt-2 text-slate-400">
                 This filter has no current review opportunities. Leave the app
                 quiet rather than manufacturing urgency.
+              </p>
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="text-sm text-slate-400">Recent intelligence</p>
+              <h2 className="text-xl font-semibold text-white">
+                Recent RNS-style evidence
+              </h2>
+            </div>
+            <p className="text-sm text-slate-400">
+              Evidence only, not trade instructions
+            </p>
+          </div>
+
+          {feed.recentIntelligence.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {feed.recentIntelligence.map((item) => {
+                const tone = getIntelligenceTone(item);
+
+                return (
+                  <article
+                    key={item.id}
+                    className="rounded-[28px] border border-white/10 bg-slate-950/55 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <PriorityBadge tone={tone} label={item.riskLabel} />
+                        <h3 className="mt-3 text-lg font-semibold text-white">
+                          {item.assetSymbol} · {item.companyName}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                          {item.headline}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Impact
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {item.impactScore}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <PriorityBadge tone={tone} label={item.announcementType} />
+                      <PriorityBadge tone="core" label={item.source} />
+                      <PriorityBadge
+                        tone={tone}
+                        label={item.verificationStatus}
+                      />
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Source confidence
+                        </p>
+                        <p className="mt-2 text-lg font-semibold text-white">
+                          {item.sourceConfidence}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Confidence score {item.sourceConfidenceScore}
+                        </p>
+                      </div>
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Published
+                        </p>
+                        <p className="mt-2 text-lg font-semibold text-white">
+                          {item.publishedAt}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">
+                          Stored as review-only intelligence
+                        </p>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-[28px] border border-dashed border-white/15 bg-slate-950/60 p-5 text-sm leading-6 text-slate-300">
+              <p className="font-semibold text-white">No recent intelligence</p>
+              <p className="mt-2 text-slate-400">
+                RNS-derived evidence will appear here once raw announcements are
+                ingested and mapped into intelligence items.
               </p>
             </div>
           )}

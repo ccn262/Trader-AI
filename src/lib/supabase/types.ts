@@ -146,6 +146,7 @@ export interface IntelligenceItemRow {
   id: string;
   scan_run_id: string | null;
   source_id: string | null;
+  raw_announcement_id: string | null;
   asset_symbol: string | null;
   headline: string;
   summary: string | null;
@@ -169,6 +170,23 @@ export interface IntelligenceItemRow {
     | "disputed";
   impact_score: number | null;
   created_at: string;
+}
+
+export interface RawAnnouncementRow {
+  id: string;
+  source_id: string | null;
+  external_id: string | null;
+  asset_symbol: string | null;
+  company_name: string | null;
+  headline: string;
+  announcement_type: string | null;
+  raw_category: string | null;
+  source_url: string | null;
+  published_at: string | null;
+  raw_payload: Record<string, unknown> | null;
+  ingestion_status: "new" | "parsed" | "ignored" | "failed";
+  created_at: string;
+  updated_at: string;
 }
 
 export interface OpportunityAlertRow {
@@ -282,6 +300,11 @@ export interface Database {
         Row: IntelligenceItemRow;
         Insert: Partial<Omit<IntelligenceItemRow, "id" | "created_at">>;
         Update: Partial<IntelligenceItemRow>;
+      };
+      raw_announcements: {
+        Row: RawAnnouncementRow;
+        Insert: Partial<Omit<RawAnnouncementRow, "id" | "created_at" | "updated_at">>;
+        Update: Partial<RawAnnouncementRow>;
       };
       opportunity_alerts: {
         Row: OpportunityAlertRow;

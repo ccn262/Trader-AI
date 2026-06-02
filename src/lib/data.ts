@@ -7,9 +7,11 @@ import type {
   AppSettingsRow,
   AssetRow,
   IntelligenceItemRow,
+  IntelligenceSourceRow,
   OpportunityAlertRow,
   OpportunityEvidenceRow,
   PortfolioPositionRow,
+  RawAnnouncementRow,
   ScanRunRow,
   ScoreHistoryRow,
   TradeJournalRow,
@@ -25,6 +27,7 @@ import {
   opportunityScans as mockOpportunityScans,
   portfolioPositions as mockPortfolioPositions,
   quickActions,
+  recentIntelligenceItems as mockRecentIntelligenceItems,
   summaryCards,
   watchlists as mockWatchlists,
 } from "./mock-data";
@@ -146,6 +149,22 @@ export type OpportunityAlertViewModel = {
 export type OpportunityAlertFeed = {
   scans: OpportunityScanViewModel[];
   alerts: OpportunityAlertViewModel[];
+  recentIntelligence: RecentIntelligenceViewModel[];
+};
+
+export type RecentIntelligenceViewModel = {
+  id: string;
+  assetSymbol: string;
+  companyName: string;
+  headline: string;
+  announcementType: string;
+  source: string;
+  sourceConfidence: string;
+  sourceConfidenceScore: number;
+  verificationStatus: "Verified" | "Partially verified" | "Unverified" | "Failed";
+  impactScore: number;
+  publishedAt: string;
+  riskLabel: "Core" | "Watch" | "Speculative" | "Urgent";
 };
 
 export type SettingsViewModel = {
@@ -345,7 +364,42 @@ function getMockOpportunityAlertFeed(): OpportunityAlertFeed {
   return {
     scans: mockOpportunityScans.map((scan) => ({ ...scan })),
     alerts: mockOpportunityAlerts.map((alert) => ({ ...alert })),
+    recentIntelligence: mockRecentIntelligenceItems.map((item) => ({ ...item })),
   };
+}
+
+function formatVerificationStatus(
+  value: IntelligenceItemRow["verification_status"] | RawAnnouncementRow["ingestion_status"],
+): RecentIntelligenceViewModel["verificationStatus"] {
+  if (value === "verified" || value === "parsed") return "Verified";
+  if (value === "partially_verified") return "Partially verified";
+  if (value === "failed") return "Failed";
+  return "Unverified";
+}
+
+function formatAnnouncementType(value: string | null | undefined) {
+  if (!value) return "Other";
+  return value
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function getRecentIntelligenceRiskLabel(
+  announcementType: string | null | undefined,
+  impactScore: number,
+): RecentIntelligenceViewModel["riskLabel"] {
+  const normalized = (announcementType ?? "").toLowerCase();
+  if (normalized.includes("going_concern")) return "Urgent";
+  if (
+    normalized.includes("placing") ||
+    normalized.includes("drill") ||
+    normalized.includes("exploration")
+  ) {
+    return "Speculative";
+  }
+  if (impactScore >= 70) return "Watch";
+  return "Core";
 }
 
 function mapWatchlist(row: WatchlistRow, assets: AssetRow[]): WatchlistViewModel {
@@ -554,6 +608,39 @@ function mapOpportunityAlertRow(
         : ["Evidence pending verification"],
     filterTags: getOpportunityFilterTags(priority, opportunityType),
     scan: scanRun?.scan_type === "evening" ? "Evening" : "Morning",
+  };
+}
+
+function mapRecentIntelligenceRow(
+  rawAnnouncement: RawAnnouncementRow,
+  intelligenceItem: IntelligenceItemRow | undefined,
+  source: IntelligenceSourceRow | undefined,
+): RecentIntelligenceViewModel {
+  const impactScore = Number(intelligenceItem?.impact_score ?? 0);
+  const confidenceScore = Number(
+    intelligenceItem?.source_confidence ?? source?.confidence_score ?? 0,
+  );
+
+  return {
+    id: rawAnnouncement.id,
+    assetSymbol: rawAnnouncement.asset_symbol ?? "Unknown",
+    companyName: rawAnnouncement.company_name ?? "Unknown company",
+    headline: rawAnnouncement.headline,
+    announcementType: formatAnnouncementType(rawAnnouncement.announcement_type),
+    source: source?.name ?? "Unknown source",
+    sourceConfidence: formatConfidenceLabel(confidenceScore),
+    sourceConfidenceScore: confidenceScore,
+    verificationStatus: formatVerificationStatus(
+      intelligenceItem?.verification_status ?? rawAnnouncement.ingestion_status,
+    ),
+    impactScore,
+    publishedAt: formatReviewDate(
+      rawAnnouncement.published_at ?? rawAnnouncement.created_at,
+    ),
+    riskLabel: getRecentIntelligenceRiskLabel(
+      rawAnnouncement.announcement_type,
+      impactScore,
+    ),
   };
 }
 
@@ -1149,6 +1236,8 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
       scansResult,
       intelligenceResult,
       scoreHistoryResult,
+      rawAnnouncementsResult,
+      sourcesResult,
     ] = await Promise.all([
       supabase
         .from("opportunity_alerts")
@@ -1174,6 +1263,12 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
         .select("*")
         .eq("score_type", "market_health")
         .order("calculated_at", { ascending: false }),
+      supabase
+        .from("raw_announcements")
+        .select("*")
+        .order("published_at", { ascending: false })
+        .limit(6),
+      supabase.from("intelligence_sources").select("*"),
     ]);
 
     if (
@@ -1181,7 +1276,9 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
       evidenceResult.error ||
       scansResult.error ||
       intelligenceResult.error ||
-      scoreHistoryResult.error
+      scoreHistoryResult.error ||
+      rawAnnouncementsResult.error ||
+      sourcesResult.error
     ) {
       return getMockOpportunityAlertFeed();
     }
@@ -1191,6 +1288,9 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
     const scanRows = (scansResult.data ?? []) as ScanRunRow[];
     const intelligenceRows = (intelligenceResult.data ?? []) as IntelligenceItemRow[];
     const scoreHistoryRows = (scoreHistoryResult.data ?? []) as ScoreHistoryRow[];
+    const rawAnnouncementRows =
+      (rawAnnouncementsResult.data ?? []) as RawAnnouncementRow[];
+    const sourceRows = (sourcesResult.data ?? []) as IntelligenceSourceRow[];
 
     const selectedScans = [
       scanRows.find((scan) => scan.scan_type === "morning") ?? null,
@@ -1208,10 +1308,18 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
         scanRows,
       ),
     );
+    const recentIntelligence = rawAnnouncementRows.map((row) =>
+      mapRecentIntelligenceRow(
+        row,
+        intelligenceRows.find((item) => item.raw_announcement_id === row.id),
+        sourceRows.find((item) => item.id === row.source_id),
+      ),
+    );
 
     return {
       scans,
       alerts,
+      recentIntelligence,
     };
   } catch {
     return getMockOpportunityAlertFeed();
