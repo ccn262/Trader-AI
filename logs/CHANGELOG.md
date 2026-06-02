@@ -19,3 +19,4 @@
 - Added `docs/TRADER_AI_CONSTITUTION.md` as the master product authority.
 - Added Phase 4 planning docs for intelligence, opportunity, risk, data source, scanner, and daily briefing architecture.
 - Updated the README and Codex brief to point future work at the constitution first.
+- Added Phase 5 mock-first Opportunity Alerts UI on the alerts route with morning/evening scan cards, filters, empty states, and review-only alert cards.
