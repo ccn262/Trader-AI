@@ -1,21 +1,31 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import {
   archiveJournalEntryAction,
   saveJournalEntryAction,
 } from "@/lib/supabase/actions";
-import { getAssets, getJournalEntries } from "@/lib/data";
+import { getAssets, getJournalEntryById } from "@/lib/data";
 import { hasSupabaseConfig } from "@/lib/supabase/server";
 
-export default async function JournalPage() {
-  const journalEntries = await getJournalEntries();
+export default async function JournalEntryPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+  const entry = await getJournalEntryById(id);
   const assets = await getAssets();
   const writable = hasSupabaseConfig();
 
+  if (!entry) {
+    notFound();
+  }
+
   return (
     <AppShell
-      title="Journal"
+      title={`Journal ${entry.ticker}`}
       subtitle="Trade notes stay decision-support only. Trades are placed manually outside this app."
     >
       <div className="space-y-6">
@@ -29,9 +39,61 @@ export default async function JournalPage() {
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-sm text-slate-400">Create entry</p>
+              <p className="text-sm text-slate-400">Journal detail</p>
+              <h2 className="text-2xl font-semibold text-white">
+                {entry.ticker} · {entry.action}
+              </h2>
+            </div>
+            <Link
+              href="/journal"
+              className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
+            >
+              Back
+            </Link>
+          </div>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Amount
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {entry.amount}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Review date
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {entry.reviewDate}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Manual exec
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {entry.manualExecutionConfirmed ? "Confirmed" : "Not confirmed"}
+              </p>
+            </div>
+            <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-4">
+              <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                Risk amount
+              </p>
+              <p className="mt-2 text-lg font-semibold text-white">
+                {entry.riskAmount}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm text-slate-400">Edit entry</p>
               <h2 className="text-xl font-semibold text-white">
-                Log a trade journal entry
+                Update the record
               </h2>
             </div>
             {!writable ? (
@@ -42,14 +104,14 @@ export default async function JournalPage() {
           </div>
 
           {writable ? (
-            <form
-              action={saveJournalEntryAction}
-              className="mt-5 grid gap-4 md:grid-cols-2"
-            >
+            <>
+            <form action={saveJournalEntryAction} className="mt-5 grid gap-4 md:grid-cols-2">
+              <input type="hidden" name="id" value={entry.id} />
               <label className="space-y-2 md:col-span-2">
                 <span className="text-sm font-medium text-slate-200">Asset</span>
                 <select
                   name="asset_id"
+                  defaultValue={entry.assetId}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 >
                   {assets.map((asset) => (
@@ -61,8 +123,15 @@ export default async function JournalPage() {
               </label>
               <label className="space-y-2">
                 <span className="text-sm font-medium text-slate-200">Action</span>
-                <select
+              <select
                   name="action"
+                  defaultValue={
+                    entry.action === "Paper trade"
+                      ? "paper_trade"
+                      : entry.action === "Avoid"
+                        ? "avoid"
+                        : entry.action.toLowerCase()
+                  }
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 >
                   <option value="add">Add</option>
@@ -79,7 +148,7 @@ export default async function JournalPage() {
                   name="amount"
                   type="number"
                   step="0.01"
-                  placeholder="30"
+                  defaultValue={entry.amount.replace("£", "")}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -91,7 +160,7 @@ export default async function JournalPage() {
                   name="entry_price"
                   type="number"
                   step="0.01"
-                  placeholder="30"
+                  placeholder="Optional"
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -101,8 +170,8 @@ export default async function JournalPage() {
                 </span>
                 <textarea
                   name="thesis_reason"
+                  defaultValue={entry.thesisReason}
                   rows={3}
-                  placeholder="Why does this trade exist?"
                   className="w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -112,8 +181,8 @@ export default async function JournalPage() {
                 </span>
                 <textarea
                   name="risk_notes"
+                  defaultValue={entry.riskNotes}
                   rows={3}
-                  placeholder="What is the risk context?"
                   className="w-full rounded-3xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -125,7 +194,7 @@ export default async function JournalPage() {
                   name="risk_amount"
                   type="number"
                   step="0.01"
-                  placeholder="1"
+                  defaultValue={entry.riskAmount.replace("£", "")}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -136,6 +205,7 @@ export default async function JournalPage() {
                 <input
                   name="review_date"
                   type="date"
+                  defaultValue={entry.reviewDate}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -145,7 +215,7 @@ export default async function JournalPage() {
                 </span>
                 <input
                   name="stop_loss_idea"
-                  placeholder="What invalidates the idea?"
+                  defaultValue={entry.stopLossIdea}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -155,7 +225,7 @@ export default async function JournalPage() {
                 </span>
                 <input
                   name="emotion_before"
-                  placeholder="Calm"
+                  defaultValue={entry.emotionBefore}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -163,7 +233,7 @@ export default async function JournalPage() {
                 <span className="text-sm font-medium text-slate-200">Result</span>
                 <input
                   name="result"
-                  placeholder="Pending"
+                  defaultValue={""}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -173,7 +243,7 @@ export default async function JournalPage() {
                 </span>
                 <input
                   name="lesson_learned"
-                  placeholder="What did you learn?"
+                  defaultValue={entry.lesson}
                   className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm"
                 />
               </label>
@@ -181,86 +251,29 @@ export default async function JournalPage() {
                 <input
                   type="checkbox"
                   name="manual_execution_confirmed"
+                  defaultChecked={entry.manualExecutionConfirmed}
                   className="mt-1 h-4 w-4 rounded border-white/20 bg-white/5 text-teal-300"
                 />
                 <span>
-                  I confirm this is a manual Trading 212 decision-support entry,
-                  not an automated trade instruction.
+                  I confirm this is a manual Trading 212 decision-support entry.
                 </span>
               </label>
-              <div className="md:col-span-2">
+              <div className="md:col-span-2 flex flex-wrap gap-3">
                 <button className="rounded-2xl bg-teal-300 px-5 py-3 text-sm font-semibold text-slate-950">
-                  Save journal entry
+                  Save changes
                 </button>
               </div>
             </form>
+            <form action={archiveJournalEntryAction} className="mt-3">
+              <input type="hidden" name="id" value={entry.id} />
+              <button className="rounded-2xl border border-rose-300/30 bg-rose-300/10 px-5 py-3 text-sm font-semibold text-rose-100">
+                Archive entry
+              </button>
+            </form>
+            </>
           ) : (
             <p className="mt-4 rounded-3xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-              Connect Supabase to create or edit journal entries. Mock fallback
-              remains available for reading.
-            </p>
-          )}
-        </section>
-
-        <section className="space-y-4 rounded-[32px] border border-white/10 bg-white/5 p-5">
-          <div>
-            <p className="text-sm text-slate-400">Journal entries</p>
-            <h2 className="text-xl font-semibold text-white">
-              View, edit, and archive
-            </h2>
-          </div>
-
-          {journalEntries.length ? (
-            <div className="grid gap-4 lg:grid-cols-2">
-              {journalEntries.map((entry) => (
-                <article
-                  key={entry.id}
-                  className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="text-base font-semibold text-white">
-                        {entry.ticker}
-                      </p>
-                      <p className="text-sm text-slate-400">
-                        {entry.action} · {entry.amount}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/journal/${entry.id}`}
-                      className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-200"
-                    >
-                      Detail
-                    </Link>
-                  </div>
-                  <div className="mt-4 space-y-2 text-sm leading-6 text-slate-400">
-                    <p>{entry.thesisReason}</p>
-                    <p>{entry.riskNotes}</p>
-                    <p>Review: {entry.reviewDate}</p>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <Link
-                      href={`/journal/${entry.id}`}
-                      className="rounded-2xl bg-teal-300 px-4 py-2 text-sm font-semibold text-slate-950"
-                    >
-                      Edit entry
-                    </Link>
-                    {writable ? (
-                      <form action={archiveJournalEntryAction}>
-                        <input type="hidden" name="id" value={entry.id} />
-                        <button className="rounded-2xl border border-rose-300/30 bg-rose-300/10 px-4 py-2 text-sm font-semibold text-rose-100">
-                          Archive entry
-                        </button>
-                      </form>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <p className="rounded-3xl border border-dashed border-white/10 bg-slate-950/60 p-4 text-sm text-slate-300">
-              No journal entries yet. Create one above to start tracking your
-              decisions.
+              Connect Supabase to edit or archive journal entries.
             </p>
           )}
         </section>

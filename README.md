@@ -4,6 +4,12 @@ Trader AI is a personal decision-support platform for monitoring ETFs, stocks, w
 
 It does not place trades. The user manually executes trades in Trading 212.
 
+## Master authority
+
+The product constitution is the master vision and architecture authority for all future work:
+
+- [docs/TRADER_AI_CONSTITUTION.md](docs/TRADER_AI_CONSTITUTION.md)
+
 ## Core principle
 
 Trader AI helps answer: "Should I research, watch, wait, or avoid this asset?"

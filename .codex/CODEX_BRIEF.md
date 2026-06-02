@@ -2,6 +2,8 @@
 
 You are building Trader AI, a personal AI-assisted trading research and portfolio monitoring app.
 
+Before any future work, read [docs/TRADER_AI_CONSTITUTION.md](../docs/TRADER_AI_CONSTITUTION.md). It is the master authority for scope, wording, and architecture.
+
 ## Hard constraints
 
 1. Decision support only. No automated trading.

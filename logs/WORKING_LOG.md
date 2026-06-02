@@ -14,13 +14,18 @@ Use this file to keep Codex and future sessions aligned.
 - Phase 2 Supabase wiring is implemented with server-side fallback to mock data when env vars are missing.
 - Schema and seed migration added at `supabase/migrations/20260602_phase2_trader_ai.sql`.
 - README now lists the required Supabase environment variables.
+- Phase 3 CRUD mutations and dynamic detail pages are implemented.
+- Routes added: `/assets/[symbol]` and `/journal/[id]`.
+- Watchlists, portfolio, journal, and alerts now support create/edit/archive/review flows when Supabase is available.
+- `docs/TRADER_AI_CONSTITUTION.md` now serves as the master authority for future work.
+- Phase 4 planning docs are being added for intelligence, opportunity, risk, data source, scanner, and daily briefing architecture.
 
 ## Next recommended action
 
-1. Provision Supabase and run the migration/seed locally or in the project database.
-2. Add asset detail pages and CRUD mutations once reads are verified.
-3. Decide whether auth is needed for later user-specific workflows.
+1. Review the Phase 4 planning docs and confirm the architecture direction before implementation.
+2. Provision Supabase and run the migrations if they have not already been applied.
+3. Test the CRUD flows against the live database and confirm the archive/review paths behave as expected.
 
 ## Codex starter instruction
 
-Build Phase 1 only: a static mobile-first prototype using mock data. Do not connect Supabase yet. Do not add live market APIs yet. Do not add automated trading. Follow `.codex/CODEX_BRIEF.md`, `docs/PRODUCT_SPEC.md`, `docs/DESIGN_SPEC.md`, and `docs/GUARDRAILS.md`.
+Before any future work, read `docs/TRADER_AI_CONSTITUTION.md` and follow `.codex/CODEX_BRIEF.md`. Keep the app decision support only. Do not add live market APIs, AI API calls, or broker execution.

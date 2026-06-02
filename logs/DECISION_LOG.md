@@ -48,3 +48,29 @@ Impact:
 - No auth required yet.
 - App remains usable offline or before Supabase is provisioned.
 - Supabase env vars are documented in `README.md`.
+
+## 2026-06-02 - CRUD scope
+
+Decision: Use Supabase-backed CRUD for assets, portfolio positions, journal entries, and alerts, with archive/review semantics instead of destructive delete flows.
+
+Reason: The product needs editable records while staying decision-support only and preserving an audit trail.
+
+Impact:
+
+- Watchlist items can be edited and archived.
+- Manual positions can be recorded, updated, and closed as records.
+- Journal entries can be created, edited, viewed, and archived.
+- Alerts can be created, marked reviewed, and archived.
+- The app continues to fall back to mock data if Supabase is not configured.
+
+## 2026-06-02 - Constitution authority
+
+Decision: Make `docs/TRADER_AI_CONSTITUTION.md` the master authority for all future Trader AI work.
+
+Reason: The product needs a stable architectural reference that governs scope, language, risk posture, and AI behavior before the intelligence and opportunity layers are implemented.
+
+Impact:
+
+- Future work must align to the constitution first.
+- Planning documents can define implementation detail, but not override the constitution.
+- README and Codex brief should point contributors to the constitution before any new work starts.

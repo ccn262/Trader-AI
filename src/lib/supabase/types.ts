@@ -5,6 +5,7 @@ export interface WatchlistRow {
   risk_profile: "low" | "medium" | "high" | "speculative";
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
 
 export interface AssetRow {
@@ -20,6 +21,7 @@ export interface AssetRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
 
 export interface PortfolioPositionRow {
@@ -35,6 +37,7 @@ export interface PortfolioPositionRow {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
 
 export interface TradeJournalRow {
@@ -54,6 +57,7 @@ export interface TradeJournalRow {
   lesson_learned: string | null;
   created_at: string;
   updated_at: string;
+  archived_at: string | null;
 }
 
 export interface AlertRow {
@@ -73,6 +77,8 @@ export interface AlertRow {
   is_active: boolean;
   triggered_at: string | null;
   created_at: string;
+  reviewed_at: string | null;
+  archived_at: string | null;
 }
 
 export interface AiScoreRow {
