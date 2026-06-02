@@ -42,6 +42,7 @@ Use this file to keep Codex and future sessions aligned.
 - Phase 13 validation now requires `RNS_SOURCE_MODE=real` plus `RNS_REAL_FETCH_ENABLED=true`, and the manual script should reject mock/demo URLs before storage.
 - The real validation path should only persist validated external evidence URLs and report validation counters explicitly.
 - A diagnostic-only source inspection script is being added so the raw page title, anchor count, href sample, and JS-rendered hint can be reviewed without writing to Supabase.
+- A source candidate registry is being added so candidate, validating, validated, rejected, paid-required, and manual-only sources can be reviewed in one place on `/sources`.
 
 ## Next recommended action
 

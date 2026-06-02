@@ -140,6 +140,18 @@ Rules:
 - Do not enable unattended ingestion just because a page fetch succeeds.
 - If the source looks JS-rendered, the next step is to inspect the page structure and decide whether a different adapter strategy is needed.
 
+## Source Candidate Registry
+
+Trader AI keeps a source candidate registry so validation outcomes are visible and reproducible.
+
+Rules:
+
+- Candidate sources should be tracked with a status, access method, confidence score, and diagnostic summary.
+- A JS-rendered source may be useful for manual review, but it should not be treated as validated simple-parser evidence.
+- The London Stock Exchange `/news` page is currently tracked as JS-rendered and rejected for simple parsing because the diagnostics showed anchorCount 0 and likelyRnsHrefCount 0.
+- Rejection does not mean the source is useless; it means the current adapter strategy should not force scraping or pretend the source is already parse-ready.
+- See [docs/SOURCE_CANDIDATE_REGISTRY.md](./SOURCE_CANDIDATE_REGISTRY.md) for the registry schema and validation rules.
+
 ## Validation Gate
 
 The real-source adapter must remain disabled unless all of the following are true:

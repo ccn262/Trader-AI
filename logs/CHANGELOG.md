@@ -51,3 +51,4 @@
 - Added `docs/REAL_RNS_SOURCE_DISCOVERY.md` plus README guidance for `RNS_SOURCE_MODE`, `RNS_SOURCE_BASE_URL`, and future source API keys.
 - Added Phase 13 controlled real-source validation with an explicit `RNS_REAL_FETCH_ENABLED=true` gate, small fetch limits, external-evidence URL filtering, and validation counters for real/manual fetch runs.
 - Added a diagnostic-only RNS source inspection script and `npm run diagnose:rns-source` so the raw source shape can be inspected before parser logic is expanded.
+- Added a source candidate registry with seeded validation statuses, a read-only `/sources` page, and registry documentation for LSE `/news` and future source classes.

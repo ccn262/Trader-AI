@@ -151,6 +151,28 @@ export interface IntelligenceSourceRow {
   created_at: string;
 }
 
+export interface SourceCandidateRow {
+  id: string;
+  name: string;
+  source_type: string;
+  url: string | null;
+  access_method: "rss" | "api" | "html" | "js_rendered" | "manual" | "paid_provider";
+  status:
+    | "candidate"
+    | "validating"
+    | "validated"
+    | "rejected"
+    | "paid_required"
+    | "manual_only";
+  confidence_score: number;
+  diagnostic_status: string | null;
+  diagnostic_summary: string | null;
+  last_checked_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface IntelligenceItemRow {
   id: string;
   scan_run_id: string | null;
@@ -338,6 +360,11 @@ export interface Database {
         Row: IntelligenceSourceRow;
         Insert: Partial<Omit<IntelligenceSourceRow, "id" | "created_at">>;
         Update: Partial<IntelligenceSourceRow>;
+      };
+      source_candidates: {
+        Row: SourceCandidateRow;
+        Insert: Partial<Omit<SourceCandidateRow, "id" | "created_at" | "updated_at">>;
+        Update: Partial<SourceCandidateRow>;
       };
       intelligence_items: {
         Row: IntelligenceItemRow;

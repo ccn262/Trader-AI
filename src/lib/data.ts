@@ -28,6 +28,7 @@ import type {
   RawAnnouncementRow,
   ScanRunRow,
   ScoreHistoryRow,
+  SourceCandidateRow,
   TradeJournalRow,
   WatchlistRow,
 } from "./supabase/types";
@@ -46,6 +47,7 @@ import {
   quickActions,
   recentIntelligenceItems as mockRecentIntelligenceItems,
   summaryCards,
+  sourceCandidates as mockSourceCandidates,
   watchlists as mockWatchlists,
 } from "./mock-data";
 
@@ -197,6 +199,26 @@ export type IntelligenceSourceViewModel = {
   baseUrl: string | null;
   confidenceScore: number;
   isActive: boolean;
+  notes: string;
+};
+
+export type SourceCandidateViewModel = {
+  id: string;
+  name: string;
+  sourceType: string;
+  url: string | null;
+  accessMethod: "rss" | "api" | "html" | "js_rendered" | "manual" | "paid_provider";
+  status:
+    | "candidate"
+    | "validating"
+    | "validated"
+    | "rejected"
+    | "paid_required"
+    | "manual_only";
+  confidenceScore: number;
+  diagnosticStatus: string;
+  diagnosticSummary: string;
+  lastCheckedAt: string;
   notes: string;
 };
 
@@ -517,6 +539,43 @@ function getMockIntelligenceSourceById(id: string) {
   return (
     mockIntelligenceSources.find((source) => source.id === id) ?? null
   );
+}
+
+function getMockSourceCandidates() {
+  return mockSourceCandidates
+    .map((row) => mapSourceCandidateRow(row))
+    .filter((row): row is SourceCandidateViewModel => row !== null);
+}
+
+function mapSourceCandidateRow(
+  row: SourceCandidateRow | (typeof mockSourceCandidates)[number] | null,
+): SourceCandidateViewModel | null {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    id: row.id,
+    name: row.name,
+    sourceType: "sourceType" in row ? row.sourceType : row.source_type,
+    url: row.url,
+    accessMethod: "accessMethod" in row ? row.accessMethod : row.access_method,
+    status: row.status,
+    confidenceScore:
+      "confidenceScore" in row ? row.confidenceScore : row.confidence_score,
+    diagnosticStatus:
+      ("diagnosticStatus" in row ? row.diagnosticStatus : row.diagnostic_status) ??
+      "",
+    diagnosticSummary:
+      ("diagnosticSummary" in row ? row.diagnosticSummary : row.diagnostic_summary) ??
+      "",
+    lastCheckedAt: (() => {
+      const value =
+        "lastCheckedAt" in row ? row.lastCheckedAt : row.last_checked_at;
+      return value ? formatScanTimestamp(value) : "Never checked";
+    })(),
+    notes: row.notes ?? "",
+  };
 }
 
 function getMockRawAnnouncementById(id: string) {
@@ -1896,6 +1955,30 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
 
 export async function getSettings(): Promise<SettingsViewModel> {
   return readAppSettings();
+}
+
+export async function getSourceCandidates(): Promise<SourceCandidateViewModel[]> {
+  if (!hasSupabaseConfig()) {
+    return getMockSourceCandidates();
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return getMockSourceCandidates();
+  }
+
+  const { data, error } = await supabase
+    .from("source_candidates")
+    .select("*")
+    .order("updated_at", { ascending: false });
+
+  if (error || !data || data.length === 0) {
+    return getMockSourceCandidates();
+  }
+
+  return (data as SourceCandidateRow[])
+    .map((row) => mapSourceCandidateRow(row))
+    .filter((row): row is SourceCandidateViewModel => row !== null);
 }
 
 export async function getAssets(): Promise<AssetViewModel[]> {
