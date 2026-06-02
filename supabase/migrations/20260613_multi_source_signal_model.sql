@@ -313,15 +313,15 @@ set
 from public.intelligence_sources source
 where source.id = item.source_id;
 
-update public.intelligence_items
+update public.intelligence_items item
 set
-  signal_type = coalesce(signal_type, 'other'),
-  source_tier = coalesce(source_tier, 3),
-  weighting_multiplier = coalesce(weighting_multiplier, 0.55),
-  primary_confirmation_required = coalesce(primary_confirmation_required, true),
-  confirmed_by_primary_source = coalesce(confirmed_by_primary_source, false),
-  rumour_flag = coalesce(rumour_flag, false),
-  pump_risk_flag = coalesce(pump_risk_flag, false)
-where signal_type is null
-   or source_tier is null
-   or weighting_multiplier is null;
+  signal_type = coalesce(item.signal_type, 'other'),
+  source_tier = coalesce(item.source_tier, 3),
+  weighting_multiplier = coalesce(item.weighting_multiplier, 0.55),
+  primary_confirmation_required = coalesce(item.primary_confirmation_required, true),
+  confirmed_by_primary_source = coalesce(item.confirmed_by_primary_source, false),
+  rumour_flag = coalesce(item.rumour_flag, false),
+  pump_risk_flag = coalesce(item.pump_risk_flag, false)
+where item.signal_type is null
+   or item.source_tier is null
+   or item.weighting_multiplier is null;
