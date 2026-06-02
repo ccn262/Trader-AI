@@ -187,3 +187,13 @@ Each scan run should capture:
 - scan status
 - completion flag
 - error message when applicable
+
+## Source Mode
+
+The current scan path keeps mock/demo RNS ingestion as the default source.
+
+Rules:
+
+- Morning and evening scans continue to use the mock adapter unless a real source is explicitly validated later.
+- Real-source discovery can be exercised manually through the dedicated real-ingestion script.
+- The scan summary may include a source-mode note when helpful, but it must not imply that unvalidated source output is verified evidence.

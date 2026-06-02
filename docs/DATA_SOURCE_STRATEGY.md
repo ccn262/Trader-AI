@@ -213,4 +213,6 @@ Future implementation should:
 - Preserve source provenance in storage.
 - Distinguish raw claims from verified summaries.
 - Allow source-specific parsing without changing the scoring core.
-
+- Keep real-source adapters manual-first and config-gated until their behaviour has been validated.
+- Preserve a mock/demo fallback so the app remains usable before live source discovery is switched on.
+- Treat placeholder or demo URLs as evidence-unavailable or internal-demo references, never as verified external proof.

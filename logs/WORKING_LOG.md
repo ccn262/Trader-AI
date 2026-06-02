@@ -37,13 +37,15 @@ Use this file to keep Codex and future sessions aligned.
 - `TRADER_AI_ADMIN_SECRET` and `CRON_SECRET` are now part of the server-only environment boundary for scan triggers.
 - A lightweight repository check is being added so client components cannot accidentally import server-secret scan or ingestion modules.
 - Evidence links are being hardened so mock/demo URLs route internally or show unavailable states instead of pretending to be live external sources.
+- The RNS ingestion path is being split into adapter + ingestion-service layers so mock/demo remains the default and real-source discovery stays manual-first.
+- A real-source placeholder script is being added for cautious manual validation without enabling unattended scraping.
 
 ## Next recommended action
 
-1. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project.
-2. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
-3. Apply `supabase/migrations/20260610_phase10_scan_orchestration.sql`, then run `npm run scan:manual` twice and verify the second pass does not duplicate raw announcements or review alerts.
-4. Use the deterministic scoring, alert-generation, and scan summary output to review high-priority, speculative, and avoid-or-reassess evidence before any later automation work.
+1. Finish the Phase 12 real RNS source adapter work, then run `npm run ingest:rns:mock` twice and `npm run ingest:rns:real` once to confirm the guarded real path exits cleanly when not configured.
+2. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project if they still need to be applied.
+3. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
+4. Apply `supabase/migrations/20260610_phase10_scan_orchestration.sql`, then run `npm run scan:manual` twice and verify the second pass does not duplicate raw announcements or review alerts.
 
 ## Codex starter instruction
 

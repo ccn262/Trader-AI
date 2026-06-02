@@ -2,7 +2,8 @@ import { resolve } from "node:path";
 
 import dotenv from "dotenv";
 
-import { ingestMockRnsAnnouncements } from "../src/lib/ingestion/rns-mock.ts";
+import { createMockRnsAdapter } from "../src/lib/ingestion/source-adapters/mock-rns-adapter.ts";
+import { ingestAnnouncementsFromAdapter } from "../src/lib/ingestion/announcement-ingestion-service.ts";
 
 dotenv.config({ path: resolve(process.cwd(), ".env.local"), quiet: true });
 
@@ -35,13 +36,19 @@ async function main() {
     return 1;
   }
 
-  const result = await ingestMockRnsAnnouncements({
+  const result = await ingestAnnouncementsFromAdapter(createMockRnsAdapter(), {
     scanRunId: "1b7f5fb7-8e69-4ccd-a8e7-9d0242052601",
+    triggerSource: "dev_script",
+    sourceMode: "mock",
   });
 
   console.log(
     JSON.stringify(
       {
+        sourceName: result.sourceName,
+        sourceMode: result.sourceMode,
+        note: result.note,
+        fetched: result.fetched,
         insertedRawAnnouncements: result.insertedRawAnnouncements,
         insertedIntelligenceItems: result.insertedIntelligenceItems,
         duplicatesSkipped: result.duplicatesSkipped,

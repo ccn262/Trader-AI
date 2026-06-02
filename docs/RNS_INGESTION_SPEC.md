@@ -287,3 +287,16 @@ Not allowed in this phase:
 - Push notifications
 - Automated broker behavior
 - AI-generated trade recommendations
+
+## Source Adapter Path
+
+The ingestion code now separates source discovery from storage.
+
+Rules:
+
+- Mock/demo announcements remain the default safe fallback.
+- Real-source discovery must be opt-in and manual-first.
+- A source adapter may fetch or validate source data, but it must not turn unvalidated output into trusted evidence.
+- The adapter layer should stay thin so the parser and storage pipeline can be swapped without changing the product boundary.
+
+See [docs/REAL_RNS_SOURCE_DISCOVERY.md](./REAL_RNS_SOURCE_DISCOVERY.md) for the real-source discovery plan.

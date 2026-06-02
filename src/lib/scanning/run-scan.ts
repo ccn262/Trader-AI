@@ -24,6 +24,7 @@ export type RunScanSummary = {
   scanRunId: string | null;
   scanType: ScanType;
   triggerSource: ScanTriggerSource;
+  sourceMode: "Mock/demo source" | "Real source not configured" | "Real source active";
   status: ScanRunRow["status"];
   completedSuccessfully: boolean;
   summary: string;
@@ -222,6 +223,7 @@ export async function runScan(input: RunScanInput): Promise<RunScanSummary> {
     scanRunId: null,
     scanType: input.scanType,
     triggerSource: input.triggerSource,
+    sourceMode: "Mock/demo source" as const,
     status: "failed" as const,
     completedSuccessfully: false,
     summary: "Scan orchestration could not run.",
@@ -281,6 +283,12 @@ export async function runScan(input: RunScanInput): Promise<RunScanSummary> {
     scanRun = await insertRunningScanRow(supabase, input);
 
     const ingestResult = await ingestMockRnsAnnouncements({ scanRunId: scanRun.id });
+    const sourceMode =
+      ingestResult.sourceMode === "real"
+        ? "Real source active"
+        : ingestResult.sourceMode === "unavailable"
+          ? "Real source not configured"
+          : "Mock/demo source";
 
     const sourceContext = await loadRnsSourceContext(supabase);
     if (!sourceContext.ok) {
@@ -541,6 +549,7 @@ export async function runScan(input: RunScanInput): Promise<RunScanSummary> {
       scanRunId: scanRun.id,
       scanType: input.scanType,
       triggerSource: input.triggerSource,
+      sourceMode,
       status: "completed",
       completedSuccessfully: true,
       summary: `${scanLabel} scan completed with ${totalIntelligenceItems} intelligence item${

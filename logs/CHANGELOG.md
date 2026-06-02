@@ -47,3 +47,5 @@
 - Documented explicit server-secret boundary rules in `docs/SCAN_RUN_ORCHESTRATION_SPEC.md`.
 - Added `src/lib/evidence-links.ts` and an internal `/intelligence/[id]` route so mock/demo evidence no longer opens fake external source URLs.
 - Updated alert evidence actions to distinguish real external sources, demo/sample evidence, and unavailable evidence.
+- Added a source-adapter foundation for real RNS discovery with a mock adapter, a guarded real/LSE placeholder adapter, a shared announcement-ingestion service, and a manual real-ingestion script.
+- Added `docs/REAL_RNS_SOURCE_DISCOVERY.md` plus README guidance for `RNS_SOURCE_MODE`, `RNS_SOURCE_BASE_URL`, and future source API keys.

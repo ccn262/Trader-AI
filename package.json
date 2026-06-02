@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "ingest:rns:mock": "node --import tsx scripts/ingest-rns-mock.mjs",
+    "ingest:rns:real": "node --import tsx scripts/ingest-rns-real.mjs",
     "score:rns:impact": "node --import tsx scripts/score-rns-impact.mjs",
     "generate:opportunity-alerts": "node --import tsx scripts/generate-opportunity-alerts.mjs",
     "scan:manual": "node --import tsx scripts/run-scan.mjs manual",
