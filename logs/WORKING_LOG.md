@@ -36,6 +36,7 @@ Use this file to keep Codex and future sessions aligned.
 - Dashboard and alerts views are being updated to show the latest morning/evening scan summaries, counts, and completion state.
 - `TRADER_AI_ADMIN_SECRET` and `CRON_SECRET` are now part of the server-only environment boundary for scan triggers.
 - A lightweight repository check is being added so client components cannot accidentally import server-secret scan or ingestion modules.
+- Evidence links are being hardened so mock/demo URLs route internally or show unavailable states instead of pretending to be live external sources.
 
 ## Next recommended action
 

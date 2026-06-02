@@ -14,6 +14,11 @@ import {
   type OpportunityAlertViewModel,
   type RecentIntelligenceViewModel,
 } from "@/lib/data";
+import {
+  getEvidenceLinkMode,
+  isMockEvidenceUrl,
+  isValidExternalEvidenceUrl,
+} from "@/lib/evidence-links";
 
 const filterOptions: Array<{
   label: OpportunityAlertFilterTag;
@@ -383,43 +388,91 @@ export default async function AlertsPage({
                         </p>
                         <div className="mt-3 space-y-3">
                           {alert.evidenceItems.length ? (
-                            alert.evidenceItems.map((item) => (
-                              <div
-                                key={`${alert.id}-${item.label}`}
-                                className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"
-                              >
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <PriorityBadge
-                                    tone={item.isPrimary ? "watch" : tone}
-                                    label={item.isPrimary ? "Primary evidence" : "Evidence"}
-                                  />
-                                  <PriorityBadge
-                                    tone="core"
-                                    label={
-                                      item.evidenceType
-                                        ? item.evidenceType.replaceAll("_", " ")
-                                        : "Evidence"
-                                    }
-                                  />
+                            alert.evidenceItems.map((item) => {
+                              const linkMode = getEvidenceLinkMode(item);
+                              const isExternal =
+                                linkMode === "external" &&
+                                isValidExternalEvidenceUrl(item.sourceUrl);
+                              const isDemo =
+                                linkMode === "internal" &&
+                                isMockEvidenceUrl(item.sourceUrl);
+                              const href =
+                                linkMode === "internal" && item.intelligenceItemId
+                                  ? `/intelligence/${item.intelligenceItemId}`
+                                  : item.sourceUrl ?? null;
+                              const actionLabel =
+                                linkMode === "external"
+                                  ? "Open source"
+                                  : linkMode === "internal"
+                                    ? isDemo
+                                      ? "View demo evidence"
+                                      : "View evidence"
+                                    : "Evidence unavailable";
+
+                              return (
+                                <div
+                                  key={`${alert.id}-${item.label}`}
+                                  className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <PriorityBadge
+                                      tone={item.isPrimary ? "watch" : tone}
+                                      label={
+                                        item.isPrimary ? "Primary evidence" : "Evidence"
+                                      }
+                                    />
+                                    <PriorityBadge
+                                      tone="core"
+                                      label={
+                                        item.evidenceType
+                                          ? item.evidenceType.replaceAll("_", " ")
+                                          : "Evidence"
+                                      }
+                                    />
+                                  </div>
+                                  <p className="mt-3 text-sm font-semibold text-white">
+                                    {item.label}
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6 text-slate-300">
+                                    {item.summary}
+                                  </p>
+                                  {linkMode === "external" && isExternal && href ? (
+                                    <a
+                                      href={href}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="mt-3 inline-flex rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-300/20"
+                                    >
+                                      {actionLabel}
+                                    </a>
+                                  ) : linkMode === "internal" && href ? (
+                                    <Link
+                                      href={href}
+                                      className="mt-3 inline-flex rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-2 text-xs font-semibold text-amber-50 transition hover:border-amber-300/50 hover:bg-amber-300/20"
+                                    >
+                                      {actionLabel}
+                                    </Link>
+                                  ) : (
+                                    <button
+                                      type="button"
+                                      disabled
+                                      className="mt-3 inline-flex cursor-not-allowed rounded-full border border-white/10 bg-white/5 px-3 py-2 text-xs font-semibold text-slate-400"
+                                    >
+                                      {actionLabel}
+                                    </button>
+                                  )}
+                                  {linkMode === "internal" ? (
+                                    <p className="mt-3 text-xs uppercase tracking-[0.24em] text-amber-200/80">
+                                      Demo/sample evidence - not a live market source
+                                    </p>
+                                  ) : linkMode === "unavailable" ? (
+                                    <p className="mt-3 text-xs uppercase tracking-[0.24em] text-slate-500">
+                                      Evidence unavailable
+                                    </p>
+                                  ) : null}
                                 </div>
-                                <p className="mt-3 text-sm font-semibold text-white">
-                                  {item.label}
-                                </p>
-                                <p className="mt-2 text-sm leading-6 text-slate-300">
-                                  {item.summary}
-                                </p>
-                                {item.sourceUrl ? (
-                                  <a
-                                    href={item.sourceUrl}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="mt-3 inline-flex rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-2 text-xs font-semibold text-sky-100 transition hover:border-sky-300/50 hover:bg-sky-300/20"
-                                  >
-                                    Open evidence
-                                  </a>
-                                ) : null}
-                              </div>
-                            ))
+                              );
+                            })
                           ) : (
                             <div className="rounded-3xl border border-dashed border-white/15 bg-slate-950/60 p-4 text-sm text-slate-300">
                               Evidence pending verification

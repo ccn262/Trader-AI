@@ -45,3 +45,5 @@
 - Added `npm run scan:manual`, `npm run scan:morning`, and `npm run scan:evening` for safe local orchestration runs.
 - Added a repository boundary check script to prevent client components from importing server-secret scan and ingestion modules.
 - Documented explicit server-secret boundary rules in `docs/SCAN_RUN_ORCHESTRATION_SPEC.md`.
+- Added `src/lib/evidence-links.ts` and an internal `/intelligence/[id]` route so mock/demo evidence no longer opens fake external source URLs.
+- Updated alert evidence actions to distinguish real external sources, demo/sample evidence, and unavailable evidence.

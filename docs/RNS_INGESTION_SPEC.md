@@ -237,6 +237,18 @@ Disallowed wording includes:
 - Sure thing
 - Risk free
 
+## Evidence Link Handling
+
+Stored source URLs must be treated carefully in the UI.
+
+Rules:
+
+- Real external announcement URLs may be opened externally and should be treated as the primary source reference.
+- Mock or demo URLs such as `mock-`, `demo`, `example.com`, `placeholder`, `localhost`, or `test` must never be displayed as verified external evidence.
+- Demo or mock evidence should route to the internal intelligence detail page when a safe internal reference exists.
+- If no trustworthy source URL is available, the UI must show evidence as unavailable rather than inventing a link.
+- The raw announcement record remains the audit trail even when the display link is unavailable.
+
 ## Guardrails For Penny Shares And Mining / Resource Companies
 
 Official announcements from speculative companies can still be dangerous to interpret naively.

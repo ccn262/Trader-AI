@@ -121,6 +121,16 @@ Sections:
 - Journal history
 - Manual action buttons: Add note, Log trade, Create alert
 
+### Evidence and intelligence detail screens
+
+When surfacing evidence from alerts or announcements:
+
+- Real external source URLs should be clearly labeled `Open source`.
+- Mock, demo, placeholder, localhost, or test URLs must never look like verified live evidence.
+- Demo/sample evidence should be routed internally to the intelligence detail screen and clearly labeled as not live market evidence.
+- Missing evidence must be shown as `Evidence unavailable` or `External source unavailable`.
+- Internal evidence pages should show the raw announcement, scoring context, and decision-support warning in a readable card layout.
+
 ### Trade journal screen
 
 Emphasis:
@@ -181,6 +191,7 @@ Card guidance:
 - Pair colour with icons, badges, and short explanatory text.
 - Use sufficient contrast in both light and dark surfaces.
 - Support keyboard navigation on desktop and readable touch targets on mobile.
+- Evidence state labels must be textual as well as visual: `Open source`, `View evidence`, `View demo evidence`, and `Evidence unavailable`.
 
 ## Tone of interface copy
 
