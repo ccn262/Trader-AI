@@ -114,12 +114,22 @@ export type OpportunityAlertFilterTag =
 
 export type OpportunityScanViewModel = {
   id: string;
-  label: "Morning Scan" | "Evening Scan";
+  label: "Morning Scan" | "Evening Scan" | "Manual Scan";
   title: string;
   summary: string;
   bullets: string[];
   status: "Completed" | "Running" | "Pending" | "Failed";
   marketHealthScore: number;
+  triggerSource: "manual" | "cron" | "dev_script";
+  startedAt: string;
+  completedAt: string;
+  completedSuccessfully: boolean;
+  totalIntelligenceItems: number;
+  totalAlertsGenerated: number;
+  highPriorityCount: number;
+  speculativeCount: number;
+  avoidOrReassessCount: number;
+  errorMessage: string | null;
 };
 
 export type OpportunityAlertViewModel = {
@@ -159,7 +169,7 @@ export type OpportunityAlertViewModel = {
   evidenceItems: OpportunityAlertEvidenceViewModel[];
   evidencePlaceholders: string[];
   filterTags: OpportunityAlertFilterTag[];
-  scan: "Morning" | "Evening";
+  scan: "Morning" | "Evening" | "Manual";
 };
 
 export type OpportunityAlertEvidenceViewModel = {
@@ -248,6 +258,7 @@ export type DashboardViewModel = {
   }>;
   quickActions: ReadonlyArray<string>;
   scores: ReadonlyArray<DashboardScoreCard>;
+  scans: ReadonlyArray<OpportunityScanViewModel>;
   alerts: ReadonlyArray<AlertViewModel>;
   journalHighlights: {
     title: string;
@@ -266,6 +277,20 @@ function formatReviewDate(value: string) {
     month: "short",
     day: "numeric",
     year: "numeric",
+  }).format(date);
+}
+
+function formatScanTimestamp(value: string | null | undefined) {
+  if (!value) return "Unknown";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "medium",
+    timeStyle: "short",
   }).format(date);
 }
 
@@ -340,7 +365,7 @@ function formatMarket(value: string | null | undefined) {
 
 function formatScanLabel(value: ScanRunRow["scan_type"]) {
   if (value === "morning") return "Morning Scan" as const;
-  if (value === "manual") return "Evening Scan" as const;
+  if (value === "manual") return "Manual Scan" as const;
   return "Evening Scan" as const;
 }
 
@@ -615,10 +640,12 @@ function mapAlertRow(row: AlertRow, assets: AssetRow[]): AlertViewModel {
 
 function mapScanRunRow(
   row: ScanRunRow,
+  alerts: OpportunityAlertRow[],
   scoreHistory: ScoreHistoryRow[],
   intelligenceItems: IntelligenceItemRow[],
 ): OpportunityScanViewModel {
   const scanItems = intelligenceItems.filter((item) => item.scan_run_id === row.id);
+  const scanAlerts = alerts.filter((alert) => alert.scan_run_id === row.id);
   const materialItems = scanItems
     .filter((item) => (item.impact_score ?? 0) >= 60)
     .slice(0, 3)
@@ -628,6 +655,12 @@ function mapScanRunRow(
       item.score_type === "market_health" &&
       item.asset_symbol.toUpperCase() === row.scan_type.toUpperCase(),
   );
+  const totalIntelligenceItems = row.total_intelligence_items || scanItems.length;
+  const totalAlertsGenerated = row.total_alerts_generated || scanAlerts.length;
+  const highPriorityCount = row.high_priority_count || scanAlerts.filter((alert) => alert.priority === "high_priority_review").length;
+  const speculativeCount = row.speculative_count || scanAlerts.filter((alert) => alert.priority === "speculative_review").length;
+  const avoidOrReassessCount = row.avoid_or_reassess_count || scanAlerts.filter((alert) => alert.priority === "avoid_or_reassess").length;
+  const status = formatScanStatus(row.status);
 
   return {
     id: row.id,
@@ -635,14 +668,24 @@ function mapScanRunRow(
     title:
       row.scan_type === "morning"
         ? "What changed overnight"
-        : "What deserves follow-up",
+        : row.scan_type === "manual"
+          ? "What the manual trigger captured"
+          : "What deserves follow-up",
     summary:
       row.summary ??
       (row.scan_type === "morning"
         ? "Focus on fresh evidence, new catalysts, and items that crossed a review threshold."
-        : "Close the loop on today's evidence and prepare tomorrow's review list."),
+        : row.scan_type === "manual"
+          ? "Manual scan output stays review-only and should be checked before any action."
+          : "Close the loop on today's evidence and prepare tomorrow's review list."),
     bullets:
-      materialItems.length > 0
+      totalAlertsGenerated > 0
+        ? [
+            `${totalIntelligenceItems} intelligence item${totalIntelligenceItems === 1 ? "" : "s"} reviewed`,
+            `${totalAlertsGenerated} review alert${totalAlertsGenerated === 1 ? "" : "s"} generated`,
+            `${highPriorityCount} high priority, ${speculativeCount} speculative, ${avoidOrReassessCount} avoid or reassess`,
+          ]
+        : materialItems.length > 0
         ? materialItems
         : row.scan_type === "morning"
           ? [
@@ -655,9 +698,20 @@ function mapScanRunRow(
               "Watchlist score changes",
               "Tomorrow's opportunity candidates",
             ],
-    status: formatScanStatus(row.status),
-    marketHealthScore:
-      Number(row.market_health_score ?? marketHealthItem?.score ?? 0) || 0,
+    status,
+    marketHealthScore: Number(
+      row.market_health_score ?? marketHealthItem?.score ?? 0,
+    ) || 0,
+    triggerSource: row.trigger_source ?? "dev_script",
+    startedAt: formatScanTimestamp(row.started_at ?? row.created_at),
+    completedAt: formatScanTimestamp(row.completed_at ?? row.started_at ?? row.created_at),
+    completedSuccessfully: row.status === "completed" || row.completed_successfully,
+    totalIntelligenceItems,
+    totalAlertsGenerated,
+    highPriorityCount,
+    speculativeCount,
+    avoidOrReassessCount,
+    errorMessage: row.error_message ?? null,
   };
 }
 
@@ -747,7 +801,12 @@ function mapOpportunityAlertRow(
         ? [primaryEvidence.summary]
         : ["Evidence pending verification"],
     filterTags: getOpportunityFilterTags(priority, opportunityType),
-    scan: scanRun?.scan_type === "evening" ? "Evening" : "Morning",
+    scan:
+      scanRun?.scan_type === "manual"
+        ? "Manual"
+        : scanRun?.scan_type === "evening"
+          ? "Evening"
+          : "Morning",
   };
 }
 
@@ -1051,6 +1110,7 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
       summaryCards,
       quickActions,
       scores: mockDashboardScores,
+      scans: mockOpportunityScans.map((scan) => ({ ...scan })),
       alerts: mockAlerts.map((entry, index) => ({
         id: `mock-alert-${index}`,
         assetId: null,
@@ -1076,6 +1136,7 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
       summaryCards,
       quickActions,
       scores: mockDashboardScores,
+      scans: mockOpportunityScans.map((scan) => ({ ...scan })),
       alerts: mockAlerts.map((entry, index) => ({
         id: `mock-alert-${index}`,
         assetId: null,
@@ -1101,12 +1162,33 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
     { data: alerts = [] },
     { data: journals = [] },
     { data: scores = [] },
+    { data: scanRuns = [] },
+    { data: opportunityAlerts = [] },
+    { data: intelligenceItems = [] },
+    { data: scoreHistory = [] },
   ] = await Promise.all([
     supabase.from("assets").select("*"),
     supabase.from("portfolio_positions").select("*"),
     supabase.from("alerts").select("*").eq("is_active", true),
     supabase.from("trade_journal").select("*").order("created_at", { ascending: false }).limit(3),
     supabase.from("ai_scores").select("*").order("total_score", { ascending: false }).limit(4),
+    supabase
+      .from("scan_runs")
+      .select("*")
+      .in("scan_type", ["morning", "evening"])
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("opportunity_alerts")
+      .select("*")
+      .eq("archived", false)
+      .neq("review_status", "archived")
+      .order("created_at", { ascending: false }),
+    supabase.from("intelligence_items").select("*").order("created_at", { ascending: false }),
+    supabase
+      .from("score_history")
+      .select("*")
+      .eq("score_type", "market_health")
+      .order("calculated_at", { ascending: false }),
   ]);
 
   const assetRows = (assets ?? []) as AssetRow[];
@@ -1114,6 +1196,10 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
   const alertRows = (alerts ?? []) as AlertRow[];
   const journalRows = (journals ?? []) as TradeJournalRow[];
   const scoreRows = (scores ?? []) as AiScoreRow[];
+  const scanRows = (scanRuns ?? []) as ScanRunRow[];
+  const opportunityAlertRows = (opportunityAlerts ?? []) as OpportunityAlertRow[];
+  const intelligenceItemRows = (intelligenceItems ?? []) as IntelligenceItemRow[];
+  const scoreHistoryRows = (scoreHistory ?? []) as ScoreHistoryRow[];
 
   const portfolioValue = positionRows.reduce((sum, row) => {
     const value = Number(row.quantity) * Number(row.current_price);
@@ -1142,6 +1228,12 @@ export async function getDashboardData(): Promise<DashboardViewModel> {
     ] as const,
     quickActions,
     scores: scoreRows.map((row) => mapScoreRow(row, assetRows)),
+    scans: [
+      scanRows.find((scan) => scan.scan_type === "morning"),
+      scanRows.find((scan) => scan.scan_type === "evening"),
+    ]
+      .filter((scan): scan is ScanRunRow => scan != null)
+      .map((scan) => mapScanRunRow(scan, opportunityAlertRows, scoreHistoryRows, intelligenceItemRows)),
     alerts: alertRows.map((row) => mapAlertRow(row, assetRows)),
     journalHighlights: journalRows.map((row) => {
       const entry = mapJournalRow(row, assetRows);
@@ -1476,8 +1568,9 @@ export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
       scanRows.find((scan) => scan.scan_type === "evening") ?? null,
     ].filter((scan): scan is ScanRunRow => scan !== null);
 
+    const alertRowsForScans = alertRows.filter((alert) => alert.scan_run_id != null);
     const scans = selectedScans.map((scan) =>
-      mapScanRunRow(scan, scoreHistoryRows, intelligenceRows),
+      mapScanRunRow(scan, alertRowsForScans, scoreHistoryRows, intelligenceRows),
     );
 
     const alerts = alertRows.map((row) =>

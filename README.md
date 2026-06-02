@@ -33,6 +33,8 @@ Required environment variables:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
+- `TRADER_AI_ADMIN_SECRET` for protected manual/admin scan triggers
+- `CRON_SECRET` for Vercel Cron protection if you use the cron routes
 
 Optional environment variables for future browser-side work:
 
@@ -40,6 +42,34 @@ Optional environment variables for future browser-side work:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 
 The current app reads from Supabase on the server when configured, and falls back to local mock data when the variables are missing.
+
+## Scan orchestration
+
+Phase 10 adds a safe scan orchestration layer that can be triggered locally, manually, or by Vercel Cron.
+
+Local commands:
+
+- `npm run scan:manual`
+- `npm run scan:morning`
+- `npm run scan:evening`
+
+Manual API trigger:
+
+- `POST /api/scans/run`
+- Requires the `x-trader-ai-admin-secret` header
+- The header must match `TRADER_AI_ADMIN_SECRET`
+
+Vercel Cron:
+
+- Morning scan: `/api/cron/morning-scan`
+- Evening scan: `/api/cron/evening-scan`
+- Both routes are protected with `CRON_SECRET` or `TRADER_AI_ADMIN_SECRET`
+- Cron schedules are defined in [`vercel.json`](vercel.json)
+
+Security warning:
+
+- Never expose `SUPABASE_SERVICE_ROLE_KEY`, `TRADER_AI_ADMIN_SECRET`, or `CRON_SECRET` client-side.
+- Keep them in server-only environment variables.
 
 ## First milestone
 

@@ -42,12 +42,22 @@ export type AlertItem = {
 
 export type OpportunityScan = {
   id: string;
-  label: "Morning Scan" | "Evening Scan";
+  label: "Morning Scan" | "Evening Scan" | "Manual Scan";
   title: string;
   summary: string;
   bullets: string[];
   status: "Completed" | "Running" | "Pending" | "Failed";
   marketHealthScore: number;
+  triggerSource: "manual" | "cron" | "dev_script";
+  startedAt: string;
+  completedAt: string;
+  completedSuccessfully: boolean;
+  totalIntelligenceItems: number;
+  totalAlertsGenerated: number;
+  highPriorityCount: number;
+  speculativeCount: number;
+  avoidOrReassessCount: number;
+  errorMessage: string | null;
 };
 
 export type OpportunityAlert = {
@@ -362,6 +372,16 @@ export const opportunityScans: OpportunityScan[] = [
     ],
     status: "Completed",
     marketHealthScore: 68,
+    triggerSource: "dev_script",
+    startedAt: "2026-06-02T07:00:00Z",
+    completedAt: "2026-06-02T07:12:00Z",
+    completedSuccessfully: true,
+    totalIntelligenceItems: 6,
+    totalAlertsGenerated: 4,
+    highPriorityCount: 2,
+    speculativeCount: 1,
+    avoidOrReassessCount: 1,
+    errorMessage: null,
   },
   {
     id: "scan-evening-20260602",
@@ -376,6 +396,16 @@ export const opportunityScans: OpportunityScan[] = [
     ],
     status: "Completed",
     marketHealthScore: 61,
+    triggerSource: "dev_script",
+    startedAt: "2026-06-02T16:35:00Z",
+    completedAt: "2026-06-02T16:48:00Z",
+    completedSuccessfully: true,
+    totalIntelligenceItems: 6,
+    totalAlertsGenerated: 4,
+    highPriorityCount: 1,
+    speculativeCount: 1,
+    avoidOrReassessCount: 1,
+    errorMessage: null,
   },
 ] as const;
 

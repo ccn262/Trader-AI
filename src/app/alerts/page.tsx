@@ -122,6 +122,60 @@ export default async function AlertsPage({
                       </li>
                     ))}
                   </ul>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
+                        Alerts
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-white">
+                        {scan.totalAlertsGenerated}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
+                        High priority
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-white">
+                        {scan.highPriorityCount}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
+                        Speculative
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-white">
+                        {scan.speculativeCount}
+                      </p>
+                    </div>
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-[11px] uppercase tracking-[0.28em] text-slate-500">
+                        Avoid/reassess
+                      </p>
+                      <p className="mt-2 text-xl font-semibold text-white">
+                        {scan.avoidOrReassessCount}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <PriorityBadge
+                      tone="core"
+                      label={`Trigger: ${scan.triggerSource.replaceAll("_", " ")}`}
+                    />
+                    <PriorityBadge tone="core" label={`Completed: ${scan.completedAt}`} />
+                    <PriorityBadge tone="core" label={`Items: ${scan.totalIntelligenceItems}`} />
+                    <PriorityBadge
+                      tone={scan.completedSuccessfully ? "healthy" : "urgent"}
+                      label={scan.completedSuccessfully ? "Completed successfully" : "Needs review"}
+                    />
+                  </div>
+
+                  {scan.errorMessage ? (
+                    <p className="mt-4 rounded-3xl border border-rose-300/20 bg-rose-300/10 p-4 text-sm leading-6 text-rose-50">
+                      {scan.errorMessage}
+                    </p>
+                  ) : null}
                 </article>
               ))}
             </div>

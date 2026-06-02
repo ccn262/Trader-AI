@@ -26,6 +26,13 @@ function getDashboardCardTone(ticker: string, status: string, score: number) {
   return getAttentionToneFromStatus(status, "core");
 }
 
+function getScanTone(status: string, completedSuccessfully: boolean) {
+  if (!completedSuccessfully || status === "Failed") return "urgent" as const;
+  if (status === "Running") return "watch" as const;
+  if (status === "Completed") return "healthy" as const;
+  return "core" as const;
+}
+
 export default async function DashboardPage() {
   const data = await getDashboardData();
 
@@ -113,6 +120,105 @@ export default async function DashboardPage() {
               </article>
             ))}
           </div>
+        </AttentionPanel>
+
+        <AttentionPanel
+          tone="healthy"
+          eyebrow="Scan loop"
+          title="Latest morning and evening scans"
+          subtitle="These runs stay review-only. The summary shows what the orchestration saw, how many alerts it generated, and whether the run completed successfully."
+        >
+          {data.scans.length ? (
+            <div className="grid gap-4 xl:grid-cols-2">
+              {data.scans.map((scan) => {
+                const tone = getScanTone(scan.status, scan.completedSuccessfully);
+
+                return (
+                  <article
+                    key={scan.id}
+                    className="rounded-[28px] border border-white/10 bg-slate-950/55 p-4"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <PriorityBadge tone={tone} label={scan.label} />
+                        <h3 className="mt-3 text-lg font-semibold text-white">
+                          {scan.title}
+                        </h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">
+                          {scan.summary}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <PriorityBadge tone={tone} label={scan.status} />
+                        <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+                          {scan.triggerSource.replaceAll("_", " ")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Alerts generated
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {scan.totalAlertsGenerated}
+                        </p>
+                      </div>
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          High priority
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {scan.highPriorityCount}
+                        </p>
+                      </div>
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Speculative
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {scan.speculativeCount}
+                        </p>
+                      </div>
+                      <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
+                        <p className="text-xs uppercase tracking-[0.3em] text-slate-500">
+                          Avoid/reassess
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold text-white">
+                          {scan.avoidOrReassessCount}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <PriorityBadge tone={tone} label={`Health ${scan.marketHealthScore}`} />
+                      <PriorityBadge tone={tone} label={`Items ${scan.totalIntelligenceItems}`} />
+                      <PriorityBadge
+                        tone={tone}
+                        label={scan.completedSuccessfully ? "Completed successfully" : "Needs review"}
+                      />
+                      <PriorityBadge tone="core" label={scan.completedAt} />
+                    </div>
+
+                    {scan.errorMessage ? (
+                      <p className="mt-4 rounded-3xl border border-rose-300/20 bg-rose-300/10 p-4 text-sm leading-6 text-rose-50">
+                        {scan.errorMessage}
+                      </p>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-[28px] border border-dashed border-white/15 bg-slate-950/60 p-5 text-sm leading-6 text-slate-300">
+              <p className="font-semibold text-white">No scan runs yet</p>
+              <p className="mt-2 text-slate-400">
+                Morning and evening scan summaries will appear here once orchestration writes
+                them. Until then, the app stays calm and avoids inventing urgency.
+              </p>
+            </div>
+          )}
         </AttentionPanel>
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
