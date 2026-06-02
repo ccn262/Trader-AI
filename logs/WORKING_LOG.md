@@ -41,13 +41,14 @@ Use this file to keep Codex and future sessions aligned.
 - A real-source placeholder script is being added for cautious manual validation without enabling unattended scraping.
 - Phase 13 validation now requires `RNS_SOURCE_MODE=real` plus `RNS_REAL_FETCH_ENABLED=true`, and the manual script should reject mock/demo URLs before storage.
 - The real validation path should only persist validated external evidence URLs and report validation counters explicitly.
+- A diagnostic-only source inspection script is being added so the raw page title, anchor count, href sample, and JS-rendered hint can be reviewed without writing to Supabase.
 
 ## Next recommended action
 
-1. Run the Phase 13 real validation script with `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true` in a trusted test environment, then confirm it only stores validated external evidence URLs.
-2. Continue using the mock adapter for scans until the real source is validated repeatedly and safely.
-3. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project if they still need to be applied.
-4. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
+1. Run `npm run diagnose:rns-source` against the configured real source page to inspect the raw HTML shape before writing parser logic.
+2. Run the Phase 13 real validation script with `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true` in a trusted test environment, then confirm it only stores validated external evidence URLs.
+3. Continue using the mock adapter for scans until the real source is validated repeatedly and safely.
+4. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project if they still need to be applied.
 
 ## Codex starter instruction
 

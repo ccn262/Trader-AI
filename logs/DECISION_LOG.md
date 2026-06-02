@@ -236,3 +236,16 @@ Impact:
 - The validation path rejects mock/demo, placeholder, localhost, and invalid URLs before storage.
 - Validation summaries report how many URLs were accepted, rejected, and persisted.
 - Cron scans remain on mock/demo ingestion until validation is complete.
+
+## 2026-06-02 - RNS source diagnostics
+
+Decision: Add a read-only diagnostic script for the raw source URL before expanding parser logic.
+
+Reason: A successful fetch that yields no extractable announcements may still be a valid source, but the team needs to inspect the raw HTML structure before guessing at parser rules.
+
+Impact:
+
+- The diagnostic script fetches only the configured base URL and never writes to Supabase.
+- It reports response metadata, title, anchor counts, href samples, and a JS-rendered heuristic.
+- JS-rendered sources are explicitly called out as potentially unsuitable for simple server-side parsing.
+- Diagnostics should run before parser changes and before any further validation or scheduler work.
