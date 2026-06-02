@@ -197,3 +197,5 @@ Rules:
 - Morning and evening scans continue to use the mock adapter unless a real source is explicitly validated later.
 - Real-source discovery can be exercised manually through the dedicated real-ingestion script.
 - The scan summary may include a source-mode note when helpful, but it must not imply that unvalidated source output is verified evidence.
+- Real-source validation is still manual-only and requires `RNS_SOURCE_MODE=real` plus `RNS_REAL_FETCH_ENABLED=true`.
+- Cron scans must continue to avoid the real-source path until validation is complete.

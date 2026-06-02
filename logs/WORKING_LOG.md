@@ -39,13 +39,15 @@ Use this file to keep Codex and future sessions aligned.
 - Evidence links are being hardened so mock/demo URLs route internally or show unavailable states instead of pretending to be live external sources.
 - The RNS ingestion path is being split into adapter + ingestion-service layers so mock/demo remains the default and real-source discovery stays manual-first.
 - A real-source placeholder script is being added for cautious manual validation without enabling unattended scraping.
+- Phase 13 validation now requires `RNS_SOURCE_MODE=real` plus `RNS_REAL_FETCH_ENABLED=true`, and the manual script should reject mock/demo URLs before storage.
+- The real validation path should only persist validated external evidence URLs and report validation counters explicitly.
 
 ## Next recommended action
 
-1. Finish the Phase 12 real RNS source adapter work, then run `npm run ingest:rns:mock` twice and `npm run ingest:rns:real` once to confirm the guarded real path exits cleanly when not configured.
-2. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project if they still need to be applied.
-3. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
-4. Apply `supabase/migrations/20260610_phase10_scan_orchestration.sql`, then run `npm run scan:manual` twice and verify the second pass does not duplicate raw announcements or review alerts.
+1. Run the Phase 13 real validation script with `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true` in a trusted test environment, then confirm it only stores validated external evidence URLs.
+2. Continue using the mock adapter for scans until the real source is validated repeatedly and safely.
+3. Apply `supabase/migrations/20260608_fix_impact_score_constraint.sql` and `supabase/migrations/20260609_phase9_alert_generation.sql` in the connected Supabase project if they still need to be applied.
+4. Run `npm run score:rns:impact` and `npm run generate:opportunity-alerts` twice in a configured environment and confirm both passes remain idempotent.
 
 ## Codex starter instruction
 
