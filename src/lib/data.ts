@@ -6,7 +6,12 @@ import type {
   AlertRow,
   AppSettingsRow,
   AssetRow,
+  IntelligenceItemRow,
+  OpportunityAlertRow,
+  OpportunityEvidenceRow,
   PortfolioPositionRow,
+  ScanRunRow,
+  ScoreHistoryRow,
   TradeJournalRow,
   WatchlistRow,
 } from "./supabase/types";
@@ -16,6 +21,8 @@ import {
   disclaimer as mockDisclaimer,
   formatCurrency,
   journalEntries as mockJournalEntries,
+  opportunityAlerts as mockOpportunityAlerts,
+  opportunityScans as mockOpportunityScans,
   portfolioPositions as mockPortfolioPositions,
   quickActions,
   summaryCards,
@@ -86,6 +93,61 @@ export type AlertViewModel = {
   archivedAt?: string | null;
 };
 
+export type OpportunityAlertFilterTag =
+  | "High-priority review"
+  | "Watch today"
+  | "Monitor only"
+  | "Penny shares"
+  | "Long-term"
+  | "Swing trades";
+
+export type OpportunityScanViewModel = {
+  id: string;
+  label: "Morning Scan" | "Evening Scan";
+  title: string;
+  summary: string;
+  bullets: string[];
+  status: "Completed" | "Running" | "Pending" | "Failed";
+  marketHealthScore: number;
+};
+
+export type OpportunityAlertViewModel = {
+  id: string;
+  symbol: string;
+  name: string;
+  market: "LSE" | "NYSE" | "NASDAQ" | "AIM";
+  opportunityType:
+    | "Long-term investment"
+    | "Swing trade"
+    | "Penny share catalyst"
+    | "Mining/resource catalyst"
+    | "Earnings momentum"
+    | "Special situation"
+    | "ETF/sector rotation";
+  catalystSummary: string;
+  score: number;
+  priority:
+    | "High-priority review"
+    | "Watch today"
+    | "Monitor only"
+    | "Speculative review";
+  sourceConfidence: string;
+  sourceConfidenceScore: number;
+  riskLevel: "Low" | "Medium" | "High" | "Speculative";
+  suggestedPositionRange: string;
+  suggestedHoldTimeframe: string;
+  exitPlan: string;
+  riskWarning: string;
+  evidencePlaceholders: string[];
+  filterTags: OpportunityAlertFilterTag[];
+  scan: "Morning" | "Evening";
+};
+
+export type OpportunityAlertFeed = {
+  scans: OpportunityScanViewModel[];
+  alerts: OpportunityAlertViewModel[];
+};
+
 export type SettingsViewModel = {
   decisionSupportOnly: boolean;
   riskMode: "beginner" | "standard" | "custom";
@@ -152,6 +214,138 @@ function formatReviewDate(value: string) {
     day: "numeric",
     year: "numeric",
   }).format(date);
+}
+
+function formatConfidenceLabel(score: number | null | undefined) {
+  if (score == null) return "Unknown";
+  if (score >= 90) return "High";
+  if (score >= 80) return "Medium-high";
+  if (score >= 65) return "Medium";
+  if (score >= 45) return "Low-medium";
+  return "Low";
+}
+
+function formatOpportunityType(
+  value: OpportunityAlertRow["opportunity_type"],
+): OpportunityAlertViewModel["opportunityType"] {
+  switch (value) {
+    case "long_term_investment":
+      return "Long-term investment";
+    case "swing_trade":
+      return "Swing trade";
+    case "penny_share_catalyst":
+      return "Penny share catalyst";
+    case "mining_resource_catalyst":
+      return "Mining/resource catalyst";
+    case "earnings_momentum":
+      return "Earnings momentum";
+    case "special_situation":
+      return "Special situation";
+    case "etf_sector_rotation":
+      return "ETF/sector rotation";
+  }
+
+  return "Swing trade";
+}
+
+function formatOpportunityPriority(
+  value: OpportunityAlertRow["priority"],
+): OpportunityAlertViewModel["priority"] {
+  switch (value) {
+    case "high_priority_review":
+      return "High-priority review";
+    case "watch_today":
+      return "Watch today";
+    case "monitor_only":
+      return "Monitor only";
+    case "speculative_review":
+      return "Speculative review";
+  }
+
+  return "Monitor only";
+}
+
+function formatRiskLevel(value: string | null | undefined) {
+  if (!value) return "Medium" as const;
+  const normalized = value.toLowerCase();
+  if (normalized.includes("spec")) return "Speculative" as const;
+  if (normalized.includes("high")) return "High" as const;
+  if (normalized.includes("low")) return "Low" as const;
+  return "Medium" as const;
+}
+
+function formatMarket(value: string | null | undefined) {
+  const normalized = (value ?? "").toUpperCase();
+  if (normalized === "AIM") return "AIM" as const;
+  if (normalized === "NYSE") return "NYSE" as const;
+  if (normalized === "NASDAQ") return "NASDAQ" as const;
+  return "LSE" as const;
+}
+
+function formatScanLabel(value: ScanRunRow["scan_type"]) {
+  if (value === "morning") return "Morning Scan" as const;
+  if (value === "manual") return "Evening Scan" as const;
+  return "Evening Scan" as const;
+}
+
+function formatScanStatus(value: ScanRunRow["status"]) {
+  switch (value) {
+    case "completed":
+      return "Completed" as const;
+    case "running":
+      return "Running" as const;
+    case "pending":
+      return "Pending" as const;
+    case "failed":
+      return "Failed" as const;
+  }
+
+  return "Pending" as const;
+}
+
+function getOpportunityFilterTags(
+  priority: OpportunityAlertViewModel["priority"],
+  opportunityType: OpportunityAlertViewModel["opportunityType"],
+) {
+  const tags = new Set<OpportunityAlertFilterTag>();
+
+  if (priority === "High-priority review") tags.add("High-priority review");
+  if (priority === "Watch today") tags.add("Watch today");
+  if (priority === "Monitor only") tags.add("Monitor only");
+  if (priority === "Speculative review") tags.add("Penny shares");
+
+  if (
+    opportunityType === "Long-term investment" ||
+    opportunityType === "ETF/sector rotation"
+  ) {
+    tags.add("Long-term");
+  }
+
+  if (
+    opportunityType === "Swing trade" ||
+    opportunityType === "Earnings momentum"
+  ) {
+    tags.add("Swing trades");
+  }
+
+  return [...tags];
+}
+
+function formatSuggestedPositionRange(
+  min: number | null | undefined,
+  max: number | null | undefined,
+) {
+  if (min == null && max == null) return "Review position size manually";
+  if (min == null) return `Up to ${formatCurrency(max ?? 0)}`;
+  if (max == null) return `From ${formatCurrency(min)}`;
+  return `${formatCurrency(min)}-${formatCurrency(max)}`;
+}
+
+function getMockOpportunityAlertFeed(): OpportunityAlertFeed {
+  return {
+    scans: mockOpportunityScans.map((scan) => ({ ...scan })),
+    alerts: mockOpportunityAlerts.map((alert) => ({ ...alert })),
+  };
 }
 
 function mapWatchlist(row: WatchlistRow, assets: AssetRow[]): WatchlistViewModel {
@@ -268,6 +462,98 @@ function mapAlertRow(row: AlertRow, assets: AssetRow[]): AlertViewModel {
         : "Today",
     reviewedAt: row.reviewed_at,
     archivedAt: row.archived_at,
+  };
+}
+
+function mapScanRunRow(
+  row: ScanRunRow,
+  scoreHistory: ScoreHistoryRow[],
+  intelligenceItems: IntelligenceItemRow[],
+): OpportunityScanViewModel {
+  const scanItems = intelligenceItems.filter((item) => item.scan_run_id === row.id);
+  const materialItems = scanItems
+    .filter((item) => (item.impact_score ?? 0) >= 60)
+    .slice(0, 3)
+    .map((item) => item.headline);
+  const marketHealthItem = scoreHistory.find(
+    (item) =>
+      item.score_type === "market_health" &&
+      item.asset_symbol.toUpperCase() === row.scan_type.toUpperCase(),
+  );
+
+  return {
+    id: row.id,
+    label: formatScanLabel(row.scan_type),
+    title:
+      row.scan_type === "morning"
+        ? "What changed overnight"
+        : "What deserves follow-up",
+    summary:
+      row.summary ??
+      (row.scan_type === "morning"
+        ? "Focus on fresh evidence, new catalysts, and items that crossed a review threshold."
+        : "Close the loop on today's evidence and prepare tomorrow's review list."),
+    bullets:
+      materialItems.length > 0
+        ? materialItems
+        : row.scan_type === "morning"
+          ? [
+              "Market health and risk appetite",
+              "New opportunities and filings",
+              "High-priority reviews for today",
+            ]
+          : [
+              "Market summary and portfolio review",
+              "Watchlist score changes",
+              "Tomorrow's opportunity candidates",
+            ],
+    status: formatScanStatus(row.status),
+    marketHealthScore:
+      Number(row.market_health_score ?? marketHealthItem?.score ?? 0) || 0,
+  };
+}
+
+function mapOpportunityAlertRow(
+  row: OpportunityAlertRow,
+  evidenceRows: OpportunityEvidenceRow[],
+  scanRuns: ScanRunRow[],
+): OpportunityAlertViewModel {
+  const priority = formatOpportunityPriority(row.priority);
+  const opportunityType = formatOpportunityType(row.opportunity_type);
+  const scanRun = scanRuns.find((scan) => scan.id === row.scan_run_id);
+
+  return {
+    id: row.id,
+    symbol: row.asset_symbol,
+    name: row.asset_name,
+    market: formatMarket(row.market),
+    opportunityType,
+    catalystSummary: row.catalyst_summary,
+    score: Number(row.score),
+    priority,
+    sourceConfidence: formatConfidenceLabel(row.source_confidence),
+    sourceConfidenceScore: Number(row.source_confidence ?? 0),
+    riskLevel: formatRiskLevel(row.risk_level),
+    suggestedPositionRange: formatSuggestedPositionRange(
+      row.suggested_position_min,
+      row.suggested_position_max,
+    ),
+    suggestedHoldTimeframe:
+      row.suggested_hold_timeframe ?? "Review timeframe manually",
+    exitPlan: row.exit_plan ?? "Reassess if the thesis loses support.",
+    riskWarning:
+      row.risk_warning ??
+      "Risk context is incomplete. Review the evidence before any manual action.",
+    evidencePlaceholders:
+      evidenceRows.length > 0
+        ? evidenceRows.map((item) =>
+            item.evidence_summary
+              ? `${item.evidence_label}: ${item.evidence_summary}`
+              : item.evidence_label,
+          )
+        : ["Evidence pending verification"],
+    filterTags: getOpportunityFilterTags(priority, opportunityType),
+    scan: scanRun?.scan_type === "evening" ? "Evening" : "Morning",
   };
 }
 
@@ -844,6 +1130,92 @@ export async function getAlerts(): Promise<AlertViewModel[]> {
   }
 
   return alertRows.map((row) => mapAlertRow(row, assetRows));
+}
+
+export async function getOpportunityAlertFeed(): Promise<OpportunityAlertFeed> {
+  if (!hasSupabaseConfig()) {
+    return getMockOpportunityAlertFeed();
+  }
+
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return getMockOpportunityAlertFeed();
+  }
+
+  try {
+    const [
+      alertsResult,
+      evidenceResult,
+      scansResult,
+      intelligenceResult,
+      scoreHistoryResult,
+    ] = await Promise.all([
+      supabase
+        .from("opportunity_alerts")
+        .select("*")
+        .eq("archived", false)
+        .neq("review_status", "archived")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("opportunity_evidence")
+        .select("*")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("scan_runs")
+        .select("*")
+        .in("scan_type", ["morning", "evening"])
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("intelligence_items")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("score_history")
+        .select("*")
+        .eq("score_type", "market_health")
+        .order("calculated_at", { ascending: false }),
+    ]);
+
+    if (
+      alertsResult.error ||
+      evidenceResult.error ||
+      scansResult.error ||
+      intelligenceResult.error ||
+      scoreHistoryResult.error
+    ) {
+      return getMockOpportunityAlertFeed();
+    }
+
+    const alertRows = (alertsResult.data ?? []) as OpportunityAlertRow[];
+    const evidenceRows = (evidenceResult.data ?? []) as OpportunityEvidenceRow[];
+    const scanRows = (scansResult.data ?? []) as ScanRunRow[];
+    const intelligenceRows = (intelligenceResult.data ?? []) as IntelligenceItemRow[];
+    const scoreHistoryRows = (scoreHistoryResult.data ?? []) as ScoreHistoryRow[];
+
+    const selectedScans = [
+      scanRows.find((scan) => scan.scan_type === "morning") ?? null,
+      scanRows.find((scan) => scan.scan_type === "evening") ?? null,
+    ].filter((scan): scan is ScanRunRow => scan !== null);
+
+    const scans = selectedScans.map((scan) =>
+      mapScanRunRow(scan, scoreHistoryRows, intelligenceRows),
+    );
+
+    const alerts = alertRows.map((row) =>
+      mapOpportunityAlertRow(
+        row,
+        evidenceRows.filter((item) => item.opportunity_alert_id === row.id),
+        scanRows,
+      ),
+    );
+
+    return {
+      scans,
+      alerts,
+    };
+  } catch {
+    return getMockOpportunityAlertFeed();
+  }
 }
 
 export async function getSettings(): Promise<SettingsViewModel> {

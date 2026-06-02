@@ -4,63 +4,65 @@ import {
   AlertPriorityCard,
   AttentionPanel,
   PriorityBadge,
+  RiskBadge,
   ScoreBadge,
 } from "@/components/attention";
 import { AppShell } from "@/components/app-shell";
 import {
-  opportunityAlerts,
-  opportunityScans,
-  type OpportunityAlert,
-} from "@/lib/mock-data";
+  getOpportunityAlertFeed,
+  type OpportunityAlertFilterTag,
+  type OpportunityAlertViewModel,
+} from "@/lib/data";
 
-const filterOptions = [
+const filterOptions: Array<{
+  label: OpportunityAlertFilterTag;
+  value: OpportunityAlertFilterTag;
+}> = [
   { label: "High-priority review", value: "High-priority review" },
   { label: "Watch today", value: "Watch today" },
   { label: "Monitor only", value: "Monitor only" },
   { label: "Penny shares", value: "Penny shares" },
   { label: "Long-term", value: "Long-term" },
   { label: "Swing trades", value: "Swing trades" },
-] as const;
+];
 
-function formatFilterCount(filterValue: string) {
-  return opportunityAlerts.filter((alert) =>
-    alert.filterTags.includes(filterValue as OpportunityAlert["filterTags"][number]),
-  ).length;
+function formatFilterCount(
+  alerts: OpportunityAlertViewModel[],
+  filterValue: OpportunityAlertFilterTag,
+) {
+  return alerts.filter((alert) => alert.filterTags.includes(filterValue)).length;
 }
 
-function getVisibleAlerts(selectedFilter: string) {
+function getVisibleAlerts(
+  alerts: OpportunityAlertViewModel[],
+  selectedFilter: string,
+) {
   if (!selectedFilter) {
-    return opportunityAlerts;
+    return alerts;
   }
 
-  return opportunityAlerts.filter((alert) =>
-    alert.filterTags.includes(selectedFilter as OpportunityAlert["filterTags"][number]),
+  return alerts.filter((alert) =>
+    alert.filterTags.includes(selectedFilter as OpportunityAlertFilterTag),
   );
 }
 
-function getAlertTone(alert: OpportunityAlert) {
-  if (alert.filterTags.includes("High-priority review")) return "urgent" as const;
-  if (alert.filterTags.includes("Watch today")) return "watch" as const;
-  if (alert.filterTags.includes("Monitor only")) return "core" as const;
-  if (alert.filterTags.includes("Penny shares")) return "speculative" as const;
+function getAlertTone(alert: OpportunityAlertViewModel) {
+  if (alert.priority === "High-priority review") return "urgent" as const;
+  if (alert.priority === "Watch today") return "watch" as const;
+  if (alert.priority === "Monitor only") return "core" as const;
+  if (alert.priority === "Speculative review") return "speculative" as const;
   return "watch" as const;
 }
 
-function getAlertPriorityLabel(alert: OpportunityAlert) {
-  if (alert.filterTags.includes("High-priority review")) return "High-priority review";
-  if (alert.filterTags.includes("Watch today")) return "Watch today";
-  if (alert.filterTags.includes("Monitor only")) return "Monitor only";
-  if (alert.filterTags.includes("Penny shares")) return "Speculative review";
-  return "Watch today";
-}
-
-export default function AlertsPage({
+export default async function AlertsPage({
   searchParams,
 }: {
-  searchParams?: { filter?: string };
+  searchParams?: Promise<{ filter?: string }>;
 }) {
-  const selectedFilter = searchParams?.filter ?? "";
-  const visibleAlerts = getVisibleAlerts(selectedFilter);
+  const params = (await searchParams) ?? {};
+  const selectedFilter = params.filter ?? "";
+  const feed = await getOpportunityAlertFeed();
+  const visibleAlerts = getVisibleAlerts(feed.alerts, selectedFilter);
 
   return (
     <AppShell
@@ -74,43 +76,55 @@ export default function AlertsPage({
           title="Opportunity alerts"
           subtitle="Review opportunity. Do not blindly buy. Trades are placed manually outside this app."
         >
-          <div className="grid gap-4 lg:grid-cols-2">
-            {opportunityScans.map((scan) => (
-              <article
-                key={scan.label}
-                className="rounded-[28px] border border-white/10 bg-slate-950/55 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <PriorityBadge
-                      tone="core"
-                      label={scan.label}
-                    />
-                    <h2 className="mt-3 text-xl font-semibold text-white">
-                      {scan.title}
-                    </h2>
+          {feed.scans.length ? (
+            <div className="grid gap-4 lg:grid-cols-2">
+              {feed.scans.map((scan) => (
+                <article
+                  key={scan.id}
+                  className="rounded-[28px] border border-white/10 bg-slate-950/55 p-4"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <PriorityBadge tone="core" label={scan.label} />
+                      <h2 className="mt-3 text-xl font-semibold text-white">
+                        {scan.title}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                      <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
+                        {scan.status}
+                      </span>
+                      <p className="mt-2 text-xs uppercase tracking-[0.3em] text-slate-500">
+                        Market health {scan.marketHealthScore}
+                      </p>
+                    </div>
                   </div>
-                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-slate-200">
-                    Scan
-                  </span>
-                </div>
-                <p className="mt-3 text-sm leading-6 text-slate-300">
-                  {scan.summary}
-                </p>
-                <ul className="mt-4 space-y-2 text-sm text-slate-300">
-                  {scan.bullets.map((bullet) => (
-                    <li
-                      key={bullet}
-                      className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
-                    >
-                      <span className="mt-1 h-2 w-2 rounded-full bg-teal-300" />
-                      <span>{bullet}</span>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
-          </div>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">
+                    {scan.summary}
+                  </p>
+                  <ul className="mt-4 space-y-2 text-sm text-slate-300">
+                    {scan.bullets.map((bullet) => (
+                      <li
+                        key={bullet}
+                        className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 px-3 py-3"
+                      >
+                        <span className="mt-1 h-2 w-2 rounded-full bg-teal-300" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[28px] border border-dashed border-white/15 bg-slate-950/60 p-5 text-sm leading-6 text-slate-300">
+              <p className="font-semibold text-white">No scan runs yet</p>
+              <p className="mt-2 text-slate-400">
+                Morning and evening scan cards will appear here once scan runs are
+                stored. Until then, the app stays calm and avoids inventing urgency.
+              </p>
+            </div>
+          )}
         </AttentionPanel>
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
@@ -135,7 +149,7 @@ export default function AlertsPage({
               </Link>
               {filterOptions.map((filter) => {
                 const active = selectedFilter === filter.value;
-                const count = formatFilterCount(filter.value);
+                const count = formatFilterCount(feed.alerts, filter.value);
                 return (
                   <Link
                     key={filter.value}
@@ -173,13 +187,12 @@ export default function AlertsPage({
             <div className="grid gap-4 xl:grid-cols-2">
               {visibleAlerts.map((alert) => {
                 const tone = getAlertTone(alert);
-                const priorityLabel = getAlertPriorityLabel(alert);
 
                 return (
                   <AlertPriorityCard
-                    key={`${alert.symbol}-${alert.opportunityType}`}
+                    key={alert.id}
                     tone={tone}
-                    title={priorityLabel}
+                    title={alert.priority}
                     subtitle={`${alert.symbol} · ${alert.name}`}
                   >
                     <div className="space-y-4">
@@ -187,6 +200,7 @@ export default function AlertsPage({
                         <PriorityBadge tone={tone} label={alert.market} />
                         <PriorityBadge tone={tone} label={alert.opportunityType} />
                         <PriorityBadge tone={tone} label={`${alert.scan} scan`} />
+                        <RiskBadge risk={alert.riskLevel} />
                       </div>
 
                       <p className="rounded-3xl border border-white/10 bg-slate-950/55 p-4 text-sm leading-6 text-slate-200">
@@ -203,7 +217,8 @@ export default function AlertsPage({
                             {alert.sourceConfidence}
                           </p>
                           <p className="mt-1 text-sm text-slate-400">
-                            Evidence should stay verified before it changes the score.
+                            Confidence score {alert.sourceConfidenceScore}. Evidence
+                            should stay verified before it changes the score.
                           </p>
                         </div>
                       </div>
@@ -280,7 +295,7 @@ export default function AlertsPage({
                         <div className="mt-3 flex flex-wrap gap-2">
                           {alert.evidencePlaceholders.map((item) => (
                             <span
-                              key={item}
+                              key={`${alert.id}-${item}`}
                               className="rounded-full border border-white/10 bg-slate-950/60 px-3 py-2 text-xs text-slate-300"
                             >
                               {item}
@@ -313,8 +328,8 @@ export default function AlertsPage({
             <div className="rounded-[28px] border border-dashed border-white/15 bg-slate-950/60 p-5 text-sm leading-6 text-slate-300">
               <p className="font-semibold text-white">No matching alerts</p>
               <p className="mt-2 text-slate-400">
-                This filter has no current mock opportunities. Switch back to
-                All or pick a different filter to review today’s cards.
+                This filter has no current review opportunities. Leave the app
+                quiet rather than manufacturing urgency.
               </p>
             </div>
           )}
