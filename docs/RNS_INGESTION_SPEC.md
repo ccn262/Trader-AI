@@ -298,5 +298,8 @@ Rules:
 - Real-source discovery must be opt-in and manual-first.
 - A source adapter may fetch or validate source data, but it must not turn unvalidated output into trusted evidence.
 - The adapter layer should stay thin so the parser and storage pipeline can be swapped without changing the product boundary.
+- Real-source validation requires `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true`.
+- Manual validation should use a small fetch limit, typically five announcements or fewer.
+- Only real external evidence URLs should be stored as trusted source URLs; mock/demo, placeholder, localhost, or test URLs should be rejected from the real-source validation path.
 
 See [docs/REAL_RNS_SOURCE_DISCOVERY.md](./REAL_RNS_SOURCE_DISCOVERY.md) for the real-source discovery plan.

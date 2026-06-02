@@ -49,3 +49,4 @@
 - Updated alert evidence actions to distinguish real external sources, demo/sample evidence, and unavailable evidence.
 - Added a source-adapter foundation for real RNS discovery with a mock adapter, a guarded real/LSE placeholder adapter, a shared announcement-ingestion service, and a manual real-ingestion script.
 - Added `docs/REAL_RNS_SOURCE_DISCOVERY.md` plus README guidance for `RNS_SOURCE_MODE`, `RNS_SOURCE_BASE_URL`, and future source API keys.
+- Added Phase 13 controlled real-source validation with an explicit `RNS_REAL_FETCH_ENABLED=true` gate, small fetch limits, external-evidence URL filtering, and validation counters for real/manual fetch runs.

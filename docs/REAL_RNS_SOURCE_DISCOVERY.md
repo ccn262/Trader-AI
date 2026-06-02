@@ -103,10 +103,24 @@ Suggested expectations:
 Recommended workflow:
 
 1. Configure a real source mode explicitly.
-2. Run the manual real-ingestion script.
-3. Confirm connectivity and source metadata.
-4. Add a parser only after the page or feed format has been validated.
-5. Move to scheduled runs only after manual validation succeeds repeatedly.
+2. Set `RNS_REAL_FETCH_ENABLED=true`.
+3. Run the manual real-ingestion script with a small limit, usually 5 or fewer announcements.
+4. Confirm the script only stores URLs that pass the external-evidence check.
+5. Review the stored evidence in Trader AI before adding any parser beyond the controlled validation path.
+6. Move to scheduled runs only after manual validation succeeds repeatedly and the source format is understood.
+
+## Validation Gate
+
+The real-source adapter must remain disabled unless all of the following are true:
+
+- `RNS_SOURCE_MODE=real`
+- `RNS_REAL_FETCH_ENABLED=true`
+- `RNS_SOURCE_BASE_URL` is set to a configured real source
+
+Optional tuning:
+
+- `RNS_REAL_FETCH_LIMIT` can cap the number of announcements fetched during manual validation
+- Default fetch limit should remain small, typically `5`
 
 ## Real Versus Mock Evidence URLs
 
@@ -123,10 +137,11 @@ When the real source is later trusted, its announcements should flow through the
 
 1. Fetch announcement metadata from the source adapter.
 2. Validate and normalize the payload.
-3. Insert or reuse `raw_announcements`.
-4. Map to `intelligence_items`.
-5. Preserve source provenance, timestamps, and raw payload.
-6. Run deterministic scoring before any alert generation.
+3. Reject mock/demo, placeholder, or invalid URLs before storage.
+4. Insert or reuse `raw_announcements` only for validated external URLs.
+5. Map to `intelligence_items`.
+6. Preserve source provenance, timestamps, and raw payload.
+7. Run deterministic scoring before any alert generation.
 
 ## Recommendation
 

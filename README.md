@@ -46,6 +46,8 @@ Optional environment variables for RNS source discovery:
 - `RNS_SOURCE_MODE=mock|real`
 - `RNS_SOURCE_BASE_URL`
 - `RNS_SOURCE_API_KEY` if a future provider requires one
+- `RNS_REAL_FETCH_ENABLED=true` for controlled manual real-source validation
+- `RNS_REAL_FETCH_LIMIT` to cap the small validation fetch count
 
 The current app reads from Supabase on the server when configured, and falls back to local mock data when the variables are missing.
 
@@ -85,6 +87,7 @@ RNS source discovery:
 - `npm run ingest:rns:mock` keeps using the mock/demo source and the existing safe ingestion pipeline.
 - `npm run ingest:rns:real` is a manual validation path for the real source adapter.
 - Real-source discovery is manual-first and config-gated; it is not enabled for unattended scans by default.
+- Real validation requires `RNS_SOURCE_MODE=real` and `RNS_REAL_FETCH_ENABLED=true`.
 
 ## First milestone
 

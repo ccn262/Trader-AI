@@ -216,3 +216,4 @@ Future implementation should:
 - Keep real-source adapters manual-first and config-gated until their behaviour has been validated.
 - Preserve a mock/demo fallback so the app remains usable before live source discovery is switched on.
 - Treat placeholder or demo URLs as evidence-unavailable or internal-demo references, never as verified external proof.
+- During real-source validation, only persist URLs that pass the external evidence check and reject mock/demo URLs before they reach trusted storage.

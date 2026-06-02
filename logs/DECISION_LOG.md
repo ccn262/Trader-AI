@@ -223,3 +223,16 @@ Impact:
 - Real-source discovery is opt-in via `RNS_SOURCE_MODE=real` and `RNS_SOURCE_BASE_URL`.
 - The adapter boundary makes it possible to validate a source before adding a parser or scheduler.
 - Unvalidated real-source output must not be treated as verified evidence or alert input.
+
+## 2026-06-02 - Real RNS source validation
+
+Decision: Add an explicit manual validation gate for the real RNS adapter using `RNS_REAL_FETCH_ENABLED=true` and a small fetch limit before any real evidence is allowed into storage.
+
+Reason: Discovery is not enough; the product needs a controlled validation step that proves external URLs are trustworthy before they are written into the evidence trail.
+
+Impact:
+
+- Real-source manual runs remain opt-in and limited.
+- The validation path rejects mock/demo, placeholder, localhost, and invalid URLs before storage.
+- Validation summaries report how many URLs were accepted, rejected, and persisted.
+- Cron scans remain on mock/demo ingestion until validation is complete.
